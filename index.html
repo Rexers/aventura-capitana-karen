@@ -344,6 +344,19 @@
         'La brújula perdió temporalmente la señal. Intenta nuevamente.';
     }
 
+    // -------- Cargar el estado del juego al abrir la app --------
+    function cargarEstado() {
+      fetch(URL_CEREBRO + '?accion=estado')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.ok) { pintarEstado(d.estado); }
+          else { mostrarError(); }
+        })
+        .catch(function() { mostrarError(); });
+    }
+
+    // Iniciar la carga en cuanto la página esté lista.
+    cargarEstado();
     // ==========================================================
     //  MOTOR DEL MAPA INTERACTIVO (zoom y arrastre) — v2
     // ==========================================================
