@@ -75,6 +75,53 @@
       font-style: italic;
     }
 
+        /* ==========================================================
+       MAPA INTERACTIVO (zoom estilo videojuego)
+       ========================================================== */
+    #p-mapa.activa { display: flex; flex-direction: column; height: 100%; }
+    #mapa-visor {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+      background: #0d1620;
+      touch-action: none;
+      border-radius: 10px;
+      border: 1px solid #3a2f1a;
+    }
+    #mapa-lienzo {
+      position: absolute;
+      top: 0; left: 0;
+      transform-origin: 0 0;
+      will-change: transform;
+    }
+    #mapa-img {
+      display: block;
+      max-width: none;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+    #mapa-ayuda {
+      text-align: center;
+      font-size: 0.75rem;
+      opacity: 0.6;
+      padding: 8px 0 2px;
+      font-style: italic;
+    }
+    .marcador {
+      position: absolute;
+      width: 26px; height: 26px;
+      margin-left: -13px; margin-top: -13px;
+      border-radius: 50%;
+      border: 2px solid #f4e4c1;
+      background: #c0392b;
+      box-shadow: 0 0 0 2px rgba(0,0,0,0.4);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem; color: #fff;
+      transition: transform 0.15s;
+    }
+    .marcador:active { transform: scale(1.2); }
+    
     /* ==========================================================
        BARRA DE NAVEGACIÓN INFERIOR
        ========================================================== */
@@ -147,8 +194,13 @@
 
     <!-- ================= MAPA ================= -->
     <section class="pantalla" id="p-mapa">
-      <h2>🗺️ Mapa</h2>
-      <div class="placeholder">Aquí desplegaremos la carta náutica de la expedición.</div>
+      <div id="mapa-visor">
+        <div id="mapa-lienzo">
+          <img id="mapa-img" src="/mapa.jpg" alt="Mapa de la expedición" draggable="false">
+          <!-- Los marcadores se generan por JavaScript aquí -->
+        </div>
+      </div>
+      <div id="mapa-ayuda">Arrastra para explorar · pellizca para acercar</div>
     </section>
 
     <!-- ================= MISIONES ================= -->
@@ -248,6 +300,125 @@
         'La brújula perdió temporalmente la señal. Intenta nuevamente.';
     }
 
+        // ==========================================================
+    //  MOTOR DEL MAPA INTERACTIVO (zoom y arrastre)
+    // ==========================================================
+
+    // Posiciones estimadas de los 9 territorios, en % sobre la imagen.
+    // (x = desde la izquierda, y = desde arriba). Se afinan luego.
+    const TERRITORIOS_MAPA = [
+      { id: 'loc01', nombre: 'Valle Dorado',              x: 53.5, y: 11 },
+      { id: 'loc02', nombre: 'Espejo Azul',               x: 46,   y: 21 },
+      { id: 'loc03', nombre: 'Isla Escondida',            x: 59,   y: 30 },
+      { id: 'loc04', nombre: 'La Ciudad de los Murales',  x: 50,   y: 38 },
+      { id: 'loc05', nombre: 'La Dama de Piedra',         x: 49,   y: 45 },
+      { id: 'loc06', nombre: 'El Nuevo Horizonte',        x: 45,   y: 54 },
+      { id: 'loc07', nombre: 'El Oasis Tranquilo',        x: 45,   y: 64 },
+      { id: 'loc08', nombre: 'El Jardín de los Recuerdos', x: 46,  y: 74 },
+      { id: 'loc09', nombre: 'El Gran Regreso',           x: 49,   y: 85 }
+    ];
+
+    let mapaEscala = 1, mapaX = 0, mapaY = 0;
+    let mapaImg, mapaLienzo, mapaVisor;
+    const MAPA_ESCALA_MIN = 1, MAPA_ESCALA_MAX = 4;
+
+    function aplicarTransformMapa() {
+      mapaLienzo.style.transform =
+        'translate(' + mapaX + 'px,' + mapaY + 'px) scale(' + mapaEscala + ')';
+    }
+
+    // Coloca los marcadores sobre la imagen según sus %.
+    function pintarMarcadores() {
+      const anchoImg = mapaImg.naturalWidth;
+      const altoImg = mapaImg.naturalHeight;
+      TERRITORIOS_MAPA.forEach(function(t, i) {
+        const m = document.createElement('div');
+        m.className = 'marcador';
+        m.style.left = (t.x / 100 * anchoImg) + 'px';
+        m.style.top = (t.y / 100 * altoImg) + 'px';
+        m.textContent = (i + 1);
+        m.title = t.nombre;
+        mapaLienzo.appendChild(m);
+      });
+    }
+
+    // Ajusta el zoom inicial para que el mapa se vea "ampliado" y centrado.
+    function iniciarMapa() {
+      mapaImg = document.getElementById('mapa-img');
+      mapaLienzo = document.getElementById('mapa-lienzo');
+      mapaVisor = document.getElementById('mapa-visor');
+
+      function alCargar() {
+        pintarMarcadores();
+        // Zoom inicial: llena el ancho del visor y centra en la ruta.
+        const anchoVisor = mapaVisor.clientWidth;
+        mapaEscala = Math.max(1, anchoVisor / mapaImg.naturalWidth * 1.6);
+        // Centrar horizontalmente en la zona de la ruta (~50% de la imagen)
+        mapaX = anchoVisor / 2 - (mapaImg.naturalWidth * 0.5 * mapaEscala);
+        mapaY = 0;
+        aplicarTransformMapa();
+      }
+
+      if (mapaImg.complete && mapaImg.naturalWidth) alCargar();
+      else mapaImg.onload = alCargar;
+
+      // ---- Arrastre con un dedo / mouse ----
+      let arrastrando = false, ultX = 0, ultY = 0;
+      let punteros = {};
+
+      mapaVisor.addEventListener('pointerdown', function(e) {
+        punteros[e.pointerId] = { x: e.clientX, y: e.clientY };
+        arrastrando = true; ultX = e.clientX; ultY = e.clientY;
+      });
+      mapaVisor.addEventListener('pointermove', function(e) {
+        if (!punteros[e.pointerId]) return;
+        punteros[e.pointerId] = { x: e.clientX, y: e.clientY };
+        const ids = Object.keys(punteros);
+
+        if (ids.length >= 2) {
+          // Pellizco (zoom con dos dedos): manejado en pointermove global
+          hacerPellizco(ids);
+        } else if (arrastrando) {
+          mapaX += e.clientX - ultX;
+          mapaY += e.clientY - ultY;
+          ultX = e.clientX; ultY = e.clientY;
+          aplicarTransformMapa();
+        }
+      });
+      function finPuntero(e) {
+        delete punteros[e.pointerId];
+        if (Object.keys(punteros).length === 0) arrastrando = false;
+        distanciaPrevia = null;
+      }
+      mapaVisor.addEventListener('pointerup', finPuntero);
+      mapaVisor.addEventListener('pointercancel', finPuntero);
+      mapaVisor.addEventListener('pointerleave', finPuntero);
+
+      // ---- Pellizco (dos dedos) ----
+      let distanciaPrevia = null;
+      function hacerPellizco(ids) {
+        const p1 = punteros[ids[0]], p2 = punteros[ids[1]];
+        const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+        if (distanciaPrevia != null) {
+          const factor = dist / distanciaPrevia;
+          const nueva = Math.min(MAPA_ESCALA_MAX, Math.max(MAPA_ESCALA_MIN, mapaEscala * factor));
+          mapaEscala = nueva;
+          aplicarTransformMapa();
+        }
+        distanciaPrevia = dist;
+      }
+
+      // ---- Zoom con rueda (computador) ----
+      mapaVisor.addEventListener('wheel', function(e) {
+        e.preventDefault();
+        const factor = e.deltaY < 0 ? 1.1 : 0.9;
+        mapaEscala = Math.min(MAPA_ESCALA_MAX, Math.max(MAPA_ESCALA_MIN, mapaEscala * factor));
+        aplicarTransformMapa();
+      }, { passive: false });
+    }
+
+    // Iniciar el mapa cuando la página esté lista.
+    iniciarMapa();
     fetch(URL_CEREBRO + '?accion=estado')
       .then(function(r) { return r.json(); })
       .then(function(d) { if (d.ok) pintarEstado(d.estado); else mostrarError(); })
