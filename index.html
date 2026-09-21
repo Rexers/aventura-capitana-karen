@@ -314,6 +314,13 @@
       color: #cbb489; margin-bottom: 10px;
     }
     .admin-diag { font-size: 0.85rem; line-height: 1.6; opacity: 0.9; margin-bottom: 10px; white-space: pre-line; }
+    .admin-etiqueta {
+      display: block;
+      font-size: 0.75rem;
+      color: #cbb489;
+      opacity: 0.85;
+      margin-bottom: 5px;
+    }
     .admin-input {
       width: 100%; padding: 12px; font-size: 0.95rem;
       background: #0d0a04; border: 1px solid #6b5528; border-radius: 8px;
@@ -497,8 +504,18 @@
           <!-- Ajustar Berries -->
           <div class="admin-seccion">
             <div class="admin-seccion-tit">Ajustar Berries (pruebas)</div>
+
+            <!-- Sumar / restar -->
+            <label class="admin-etiqueta">Sumar o restar (ej: 100 o -50)</label>
             <input type="number" id="admin-monto" class="admin-input" placeholder="Ej: 100 o -50">
             <button class="admin-btn-mini" onclick="adminSumarBerries()">Aplicar ajuste</button>
+
+            <!-- Fijar saldo exacto -->
+            <label class="admin-etiqueta" style="margin-top:14px;">Fijar saldo exacto</label>
+            <input type="number" id="admin-saldo" class="admin-input" placeholder="Ej: 200" min="0">
+            <button class="admin-btn-mini" onclick="adminFijarSaldo()">Fijar saldo</button>
+
+            <p class="admin-nota" style="margin-top:10px;margin-bottom:0;">Estos ajustes no aparecen en el historial de la Capitana.</p>
           </div>
 
           <!-- Resetear progreso -->
@@ -872,6 +889,26 @@
             cargarEstado(); // refresca el saldo en el Inicio
           } else {
             alert(d.error || 'No se pudo ajustar.');
+            manejarSesionExpirada(d);
+          }
+        })
+        .catch(function() { alert('Sin señal.'); });
+    }
+    
+    // --- Fijar saldo exacto ---
+    function adminFijarSaldo() {
+      const saldo = document.getElementById('admin-saldo').value;
+      if (saldo === '') return;
+      fetch(URL_CEREBRO + '?accion=admin_fijar_saldo&token=' + encodeURIComponent(adminToken) +
+            '&saldo=' + encodeURIComponent(saldo))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.ok) {
+            document.getElementById('admin-saldo').value = '';
+            adminVerDiagnostico();
+            cargarEstado(); // refresca el saldo en el Inicio
+          } else {
+            alert(d.error || 'No se pudo fijar el saldo.');
             manejarSesionExpirada(d);
           }
         })
