@@ -300,6 +300,33 @@
       margin-bottom: 10px;
     }
     .admin-error { color: #e57373; font-size: 0.85rem; min-height: 20px; margin-bottom: 8px; }
+
+        .admin-seccion {
+      background: rgba(0,0,0,0.25);
+      border: 1px solid #4a3c1e;
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 14px;
+      text-align: left;
+    }
+    .admin-seccion-tit {
+      font-size: 0.8rem; letter-spacing: 1px; text-transform: uppercase;
+      color: #cbb489; margin-bottom: 10px;
+    }
+    .admin-diag { font-size: 0.85rem; line-height: 1.6; opacity: 0.9; margin-bottom: 10px; white-space: pre-line; }
+    .admin-input {
+      width: 100%; padding: 12px; font-size: 0.95rem;
+      background: #0d0a04; border: 1px solid #6b5528; border-radius: 8px;
+      color: #f4e4c1; font-family: inherit; margin-bottom: 10px;
+    }
+    .admin-btn-mini {
+      width: 100%; padding: 12px; font-size: 0.9rem;
+      background: #3a5a40; color: #fff; border: 1px solid #6b8e6f;
+      border-radius: 8px; font-family: inherit; cursor: pointer;
+    }
+    .admin-peligro { border-color: #7a2a22; }
+    .admin-btn-rojo { background: #7a2a22; border-color: #c0392b; }
+    .admin-msg { font-size: 0.85rem; margin-top: 8px; min-height: 18px; }
     
     /* ==========================================================
        BARRA DE NAVEGACIÓN INFERIOR
@@ -459,7 +486,28 @@
         <h3>MODO PRIMER OFICIAL</h3>
         <p class="admin-nota" id="admin-sesion-info">Sesión activa.</p>
         <div id="admin-herramientas">
-          <p style="opacity:0.7;font-style:italic;">Las herramientas de administración aparecerán aquí.</p>
+
+          <!-- Diagnóstico -->
+          <div class="admin-seccion">
+            <div class="admin-seccion-tit">Diagnóstico</div>
+            <div id="admin-diag" class="admin-diag">—</div>
+            <button class="admin-btn-mini" onclick="adminVerDiagnostico()">Actualizar diagnóstico</button>
+          </div>
+
+          <!-- Ajustar Berries -->
+          <div class="admin-seccion">
+            <div class="admin-seccion-tit">Ajustar Berries (pruebas)</div>
+            <input type="number" id="admin-monto" class="admin-input" placeholder="Ej: 100 o -50">
+            <button class="admin-btn-mini" onclick="adminSumarBerries()">Aplicar ajuste</button>
+          </div>
+
+          <!-- Resetear progreso -->
+          <div class="admin-seccion admin-peligro">
+            <div class="admin-seccion-tit">Zona de peligro</div>
+            <p class="admin-nota" style="margin-bottom:10px;">Resetea territorios, misiones, Berries y recompensas. Conserva la bitácora.</p>
+            <button class="admin-btn-mini admin-btn-rojo" onclick="adminPedirReset()">🔄 Resetear progreso</button>
+          </div>
+
         </div>
         <button class="modal-btn secundario" onclick="logoutAdmin()">Cerrar sesión</button>
       </div>
@@ -783,6 +831,83 @@
       }
       adminToken = null;
       cerrarAdmin();
+    }
+
+        // ==========================================================
+    //  HERRAMIENTAS DEL PANEL (usan el token)
+    // ==========================================================
+
+    // --- Diagnóstico ---
+    function adminVerDiagnostico() {
+      const el = document.getElementById('admin-diag');
+      el.textContent = 'Consultando…';
+      fetch(URL_CEREBRO + '?accion=admin_diagnostico&token=' + encodeURIComponent(adminToken))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.ok) {
+            const g = d.diagnostico;
+            el.textContent =
+              'Territorios: ' + g.territorios_descubiertos + ' / ' + g.territorios_total + '\n' +
+              'Saldo: ' + g.saldo + ' Berries\n' +
+              'Ganado: ' + g.total_ganado + '  ·  Gastado: ' + g.total_gastado;
+          } else {
+            el.textContent = d.error || 'Error.';
+            manejarSesionExpirada(d);
+          }
+        })
+        .catch(function() { el.textContent = 'Sin señal.'; });
+    }
+
+    // --- Ajustar Berries ---
+    function adminSumarBerries() {
+      const monto = document.getElementById('admin-monto').value;
+      if (!monto) return;
+      fetch(URL_CEREBRO + '?accion=admin_berries&token=' + encodeURIComponent(adminToken) +
+            '&monto=' + encodeURIComponent(monto))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.ok) {
+            document.getElementById('admin-monto').value = '';
+            adminVerDiagnostico();
+            cargarEstado(); // refresca el saldo en el Inicio
+          } else {
+            alert(d.error || 'No se pudo ajustar.');
+            manejarSesionExpirada(d);
+          }
+        })
+        .catch(function() { alert('Sin señal.'); });
+    }
+
+    // --- Resetear progreso (con confirmación) ---
+    function adminPedirReset() {
+      const seguro = confirm('¿Seguro que quieres RESETEAR el progreso?\n\nEsto borra territorios, misiones, Berries y canjes. La bitácora se conserva.\n\nEsta acción no se puede deshacer.');
+      if (!seguro) return;
+      // Doble confirmación por ser destructivo.
+      const seguro2 = confirm('Última confirmación: ¿resetear la aventura a cero?');
+      if (!seguro2) return;
+
+      fetch(URL_CEREBRO + '?accion=admin_reset&token=' + encodeURIComponent(adminToken))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.ok) {
+            alert('✔ ' + d.mensaje);
+            adminVerDiagnostico();
+            cargarEstado(); // refresca todo (Inicio + mapa)
+          } else {
+            alert(d.error || 'No se pudo resetear.');
+            manejarSesionExpirada(d);
+          }
+        })
+        .catch(function() { alert('Sin señal.'); });
+    }
+
+    // --- Si la sesión expiró, cerrar el panel y pedir clave de nuevo ---
+    function manejarSesionExpirada(d) {
+      if (d && d.error && d.error.indexOf('Sesión') !== -1) {
+        adminToken = null;
+        alert('Tu sesión de Primer Oficial expiró. Ingresa la clave de nuevo.');
+        cerrarAdmin();
+      }
     }
     
     // -------- Cargar el estado del juego al abrir la app --------
