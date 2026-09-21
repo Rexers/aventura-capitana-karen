@@ -142,7 +142,27 @@
       transition: transform 0.15s;
     }
     .marcador:active { transform: scale(1.2); }
-    
+    /* --- Estados de los marcadores --- */
+    .marcador.estado-bloqueado {
+      background: #4a4a4a;
+      border-color: #888;
+      opacity: 0.72;
+    }
+    .marcador.estado-disponible {
+      background: #c0392b;
+      border-color: #f4e4c1;
+      animation: latido 1.6s ease-in-out infinite;
+    }
+    .marcador.estado-descubierto {
+      background: #d4a017;          /* dorado conquistado */
+      border-color: #fff3cf;
+      color: #2a1e05;
+    }
+    /* Latido suave para invitar a tocar el territorio disponible */
+    @keyframes latido {
+      0%, 100% { box-shadow: 0 0 0 2px rgba(0,0,0,0.4), 0 0 0 0 rgba(192,57,43,0.6); }
+      50%      { box-shadow: 0 0 0 2px rgba(0,0,0,0.4), 0 0 0 10px rgba(192,57,43,0); }
+    }
     /* ==========================================================
        BARRA DE NAVEGACIÓN INFERIOR
        ========================================================== */
@@ -336,8 +356,19 @@
       mision.classList.remove('cargando');
 
       // El mapa arrancará enfocado en el primer territorio no descubierto.
-      // (descubiertos = 0 -> marcador 1; = 3 -> marcador 4; etc.)
       mapaFocoIndice = Math.min(estado.progreso.descubiertos, TERRITORIOS_MAPA.length - 1);
+
+      // Guardar los estados de territorio que llegan del cerebro.
+      if (estado.territorios) {
+        ESTADOS_TERRITORIO = {};
+        estado.territorios.forEach(function(t) {
+          ESTADOS_TERRITORIO[t.id] = t;
+        });
+        // Si el mapa ya está pintado, refrescar los marcadores.
+        if (mapaIniciado && mapaImg && mapaImg.naturalWidth) {
+          pintarMarcadores();
+        }
+      }
     }
     function mostrarError() {
       document.getElementById('oficial').textContent =
@@ -361,6 +392,8 @@
     //  MOTOR DEL MAPA INTERACTIVO (zoom y arrastre) — v2
     // ==========================================================
 
+    // Estados de cada territorio (llegan del cerebro). Clave = id.
+    let ESTADOS_TERRITORIO = {};
     // Posiciones estimadas de los 9 territorios, en % sobre la imagen.
     const TERRITORIOS_MAPA = [
       { id: 'loc01', nombre: 'Valle Dorado',               x: 53.5, y: 11 },
@@ -410,13 +443,31 @@
     function pintarMarcadores() {
       const anchoImg = mapaImg.naturalWidth;
       const altoImg = mapaImg.naturalHeight;
+
+      // Quitar marcadores anteriores (para poder refrescar).
+      mapaLienzo.querySelectorAll('.marcador').forEach(function(m) { m.remove(); });
+
       TERRITORIOS_MAPA.forEach(function(t, i) {
+        // Buscar el estado real de este territorio (llega del cerebro).
+        const info = ESTADOS_TERRITORIO[t.id];
+        const estado = info ? info.estado : 'bloqueado';
+
         const m = document.createElement('div');
-        m.className = 'marcador';
+        m.className = 'marcador estado-' + estado;
         m.style.left = (t.x / 100 * anchoImg) + 'px';
         m.style.top = (t.y / 100 * altoImg) + 'px';
-        m.textContent = (i + 1);
+        m.setAttribute('data-id', t.id);
         m.title = t.nombre;
+
+        // Contenido del marcador según estado.
+        if (estado === 'bloqueado') {
+          m.innerHTML = '&#128274;';        // candado
+        } else if (estado === 'descubierto') {
+          m.innerHTML = '&#10003;';         // check
+        } else {
+          m.textContent = (i + 1);          // número (disponible)
+        }
+
         mapaLienzo.appendChild(m);
       });
     }
