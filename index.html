@@ -334,6 +334,10 @@
       var mision = document.getElementById('mision');
       mision.textContent = estado.mision_actual ? estado.mision_actual.titulo : '(sin misión activa)';
       mision.classList.remove('cargando');
+
+      // El mapa arrancará enfocado en el primer territorio no descubierto.
+      // (descubiertos = 0 -> marcador 1; = 3 -> marcador 4; etc.)
+      mapaFocoIndice = Math.min(estado.progreso.descubiertos, TERRITORIOS_MAPA.length - 1);
     }
     function mostrarError() {
       document.getElementById('oficial').textContent =
@@ -416,17 +420,41 @@
       aplicarTransformMapa();
     }
 
+    // Índice del territorio en el que arrancará enfocado el mapa (0 = marcador 1).
+    let mapaFocoIndice = 0;
+
     function ajustarZoomInicial() {
+      const altoVisor = mapaVisor.clientHeight;
+      // Escala mínima: el mapa cubre todo el alto del visor (nunca se aleja más).
+      mapaEscalaMin = altoVisor / mapaImg.naturalHeight;
+
+      // Escala de arranque: un poco más acercada que el mínimo, para "enfocar".
+      const escalaFoco = Math.min(MAPA_ESCALA_MAX, mapaEscalaMin * 1.8);
+      mapaEscala = escalaFoco;
+
+      // Centrar el visor sobre el marcador objetivo.
+      centrarEnTerritorio(mapaFocoIndice, false);
+    }
+
+    // Centra el mapa sobre el territorio de índice dado.
+    function centrarEnTerritorio(indice, animar) {
+      if (indice < 0 || indice >= TERRITORIOS_MAPA.length) indice = 0;
+      const t = TERRITORIOS_MAPA[indice];
       const anchoVisor = mapaVisor.clientWidth;
       const altoVisor = mapaVisor.clientHeight;
-      // Escala mínima: que el mapa cubra todo el alto del visor (se ve "ampliado").
-      mapaEscalaMin = altoVisor / mapaImg.naturalHeight;
-      mapaEscala = mapaEscalaMin;
-      // Centrar horizontalmente en la ruta (~centro de la imagen).
-      mapaX = anchoVisor / 2 - (mapaImg.naturalWidth * mapaEscala / 2);
-      mapaY = 0;
+      // Posición del marcador en píxeles reales de la imagen, ya escalada.
+      const px = (t.x / 100) * mapaImg.naturalWidth * mapaEscala;
+      const py = (t.y / 100) * mapaImg.naturalHeight * mapaEscala;
+      mapaX = anchoVisor / 2 - px;
+      mapaY = altoVisor / 2 - py;
       limitarMapa();
-      aplicarTransformMapa();
+      if (animar) {
+        mapaLienzo.style.transition = 'transform 0.5s ease';
+        aplicarTransformMapa();
+        setTimeout(function() { mapaLienzo.style.transition = ''; }, 520);
+      } else {
+        aplicarTransformMapa();
+      }
     }
 
     function iniciarMapa() {
@@ -461,17 +489,26 @@
         const ids = Object.keys(punteros);
 
         if (ids.length >= 2) {
-          // --- Pellizco: zoom centrado entre los dos dedos ---
+          // --- Pellizco: zoom + arrastre simultáneos (como la galería) ---
           const p1 = punteros[ids[0]], p2 = punteros[ids[1]];
           const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
           const r = rectVisor();
-          const cx = (p1.x + p2.x) / 2 - r.left;
+          const cx = (p1.x + p2.x) / 2 - r.left;   // centro actual entre dedos
           const cy = (p1.y + p2.y) / 2 - r.top;
-          if (distanciaPrevia != null) {
+
+          if (distanciaPrevia != null && centroPrevio != null) {
+            // 1) Mover según cuánto se desplazó el centro de los dedos.
+            mapaX += cx - centroPrevio.x;
+            mapaY += cy - centroPrevio.y;
+            // 2) Aplicar el zoom centrado en ese punto.
             zoomEnPunto(mapaEscala * (dist / distanciaPrevia), cx, cy);
+          } else {
+            limitarMapa();
+            aplicarTransformMapa();
           }
           distanciaPrevia = dist;
-          arrastrando = false;      // durante el pellizco no arrastramos
+          centroPrevio = { x: cx, y: cy };
+          arrastrando = false;      // el movimiento lo maneja el pellizco
         } else if (arrastrando) {
           mapaX += e.clientX - ultX;
           mapaY += e.clientY - ultY;
@@ -483,7 +520,16 @@
 
       function finPuntero(e) {
         delete punteros[e.pointerId];
-        if (Object.keys(punteros).length < 2) distanciaPrevia = null;
+        if (Object.keys(punteros).length < 2) {
+          distanciaPrevia = null;
+          centroPrevio = null;
+          // Si queda un dedo, que ese retome el arrastre suavemente.
+          const restantes = Object.keys(punteros);
+          if (restantes.length === 1) {
+            const p = punteros[restantes[0]];
+            arrastrando = true; ultX = p.x; ultY = p.y;
+          }
+        }
         if (Object.keys(punteros).length === 0) arrastrando = false;
       }
       mapaVisor.addEventListener('pointerup', finPuntero);
