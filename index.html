@@ -144,24 +144,32 @@
     .marcador:active { transform: scale(1.2); }
     /* --- Estados de los marcadores --- */
     .marcador.estado-bloqueado {
-      background: #4a4a4a;
-      border-color: #888;
-      opacity: 0.72;
+      background: #2a2a2e;          /* fondo oscuro y sólido */
+      border-color: #d8c9a8;        /* borde claro visible */
+      opacity: 1;                   /* totalmente visible */
+      color: #e8dcc0;               /* candado claro */
+      box-shadow: 0 2px 5px rgba(0,0,0,0.6);  /* relieve sobre el mapa */
     }
     .marcador.estado-disponible {
       background: #c0392b;
-      border-color: #f4e4c1;
-      animation: latido 1.6s ease-in-out infinite;
+      border-color: #fff;
+      width: 30px; height: 30px;    /* un poco más grande: "ven aquí" */
+      margin-left: -15px; margin-top: -15px;
+      font-weight: bold;
+      z-index: 3;                   /* siempre encima de los demás */
+      animation: latido 1.5s ease-in-out infinite;
     }
     .marcador.estado-descubierto {
       background: #d4a017;          /* dorado conquistado */
       border-color: #fff3cf;
       color: #2a1e05;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.5);
     }
-    /* Latido suave para invitar a tocar el territorio disponible */
+    /* Latido notorio para invitar a tocar el territorio disponible */
     @keyframes latido {
-      0%, 100% { box-shadow: 0 0 0 2px rgba(0,0,0,0.4), 0 0 0 0 rgba(192,57,43,0.6); }
-      50%      { box-shadow: 0 0 0 2px rgba(0,0,0,0.4), 0 0 0 10px rgba(192,57,43,0); }
+      0%   { box-shadow: 0 0 0 2px rgba(0,0,0,0.5), 0 0 0 0 rgba(255,80,60,0.85); }
+      70%  { box-shadow: 0 0 0 2px rgba(0,0,0,0.5), 0 0 0 16px rgba(255,80,60,0); }
+      100% { box-shadow: 0 0 0 2px rgba(0,0,0,0.5), 0 0 0 0 rgba(255,80,60,0); }
     }
     /* ==========================================================
        BARRA DE NAVEGACIÓN INFERIOR
