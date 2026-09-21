@@ -5,23 +5,94 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>La Aventura de la Capitana Karen</title>
   <style>
+    /* Estilo temporal y sencillo. El diseño pirata real
+       llegará en un paso posterior. Esto confirma que la cara
+       (Netlify) y el cerebro (Apps Script) ya se comunican. */
     body {
-      font-family: Georgia, serif;
+      font-family: Georgia, 'Times New Roman', serif;
       background: #1c2b3a;
       color: #f4e4c1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
       margin: 0;
+      padding: 24px;
+      -webkit-text-size-adjust: 100%;
+    }
+    .tarjeta {
+      max-width: 480px;
+      margin: 40px auto;
+      background: rgba(0,0,0,0.25);
+      border: 1px solid #8a6d3b;
+      border-radius: 12px;
+      padding: 24px;
       text-align: center;
     }
+    h1 { font-size: 1.5rem; line-height: 1.3; margin: 0 0 4px; }
+    .sub { opacity: 0.8; font-size: 0.95rem; margin-bottom: 20px; }
+    .dato { font-size: 1.1rem; margin: 10px 0; }
+    .berries { font-size: 1.6rem; font-weight: bold; color: #e8c24a; }
+    .barra { background: rgba(255,255,255,0.1); border-radius: 20px; height: 18px; overflow: hidden; margin: 8px 0; }
+    .barra > div { background: #c0392b; height: 100%; width: 0%; transition: width 0.6s; }
+    .mision { margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.15); }
+    .cargando { opacity: 0.6; font-style: italic; }
   </style>
 </head>
 <body>
-  <div>
-    <h1>🏴‍☠️ La tubería funciona</h1>
-    <p>Si ves esto en tu iPhone sin problemas de cuentas,<br>hemos derrotado al bug.</p>
+  <div class="tarjeta">
+    <h1>🏴‍☠️ La Aventura de la Capitana Karen</h1>
+    <div class="sub" id="oficial">cargando…</div>
+
+    <div class="dato">CAPITANA: <strong id="capitana">…</strong></div>
+
+    <div class="dato">EXPEDICIÓN</div>
+    <div class="barra"><div id="barra"></div></div>
+    <div id="progreso" class="cargando">…</div>
+
+    <div class="dato berries" id="berries">…</div>
+
+    <div class="mision">
+      <div>⚓ MISIÓN ACTUAL</div>
+      <div id="mision" class="cargando">…</div>
+    </div>
   </div>
+
+  <script>
+    // ⚓ La dirección del cerebro (Apps Script).
+    // Reemplaza el texto de abajo por tu URL que termina en /exec
+    const URL_CEREBRO = "https://script.google.com/macros/s/AKfycbw70-gJwLl8OMSQ9RId5b9rgjJKkJP3zfVv4W4_piEWYezPH-sKHCMf7deFiVurNXvc/exec";
+
+    // Pinta los datos recibidos en la pantalla.
+    function pintarEstado(estado) {
+      document.getElementById('capitana').textContent = estado.capitana;
+      document.getElementById('oficial').textContent = 'Primer Oficial: ' + estado.primer_oficial;
+      document.getElementById('berries').textContent = '🪙 ' + estado.berries + ' Berries';
+      document.getElementById('progreso').textContent =
+        estado.progreso.descubiertos + ' / ' + estado.progreso.total + ' territorios (' + estado.progreso.porcentaje + '%)';
+      document.getElementById('progreso').classList.remove('cargando');
+      document.getElementById('barra').style.width = estado.progreso.porcentaje + '%';
+
+      var mision = document.getElementById('mision');
+      mision.textContent = estado.mision_actual ? estado.mision_actual.titulo : '(sin misión activa)';
+      mision.classList.remove('cargando');
+    }
+
+    // Muestra un mensaje amable si algo falla (nunca error técnico).
+    function mostrarError() {
+      document.getElementById('oficial').textContent =
+        'La brújula perdió temporalmente la señal. Intenta nuevamente.';
+    }
+
+    // Pide el estado del juego al cerebro y lo pinta.
+    fetch(URL_CEREBRO + '?accion=estado')
+      .then(function(respuesta) { return respuesta.json(); })
+      .then(function(datos) {
+        if (datos.ok) {
+          pintarEstado(datos.estado);
+        } else {
+          mostrarError();
+        }
+      })
+      .catch(function() {
+        mostrarError();
+      });
+  </script>
 </body>
 </html>
