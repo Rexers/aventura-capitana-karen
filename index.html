@@ -75,8 +75,8 @@
       font-style: italic;
     }
 
-          /* ==========================================================
-       MAPA INTERACTIVO (zoom estilo videojuego) — v2
+    /* ==========================================================
+    MAPA INTERACTIVO (zoom estilo videojuego) — v2
        ========================================================== */
     /* El mapa ocupa toda la ventana disponible (sin cuadro),
        y como #contenido tiene padding, lo anulamos solo aquí. */
@@ -269,6 +269,37 @@
     @keyframes caer {
       to { transform: translateY(110vh) rotate(360deg); opacity: 0; }
     }
+
+        /* ==========================================================
+       MODO PRIMER OFICIAL
+       ========================================================== */
+    #admin-fondo {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 100;
+      align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    #admin-fondo.abierto { display: flex; }
+    #admin-caja {
+      background: #1a1206;
+      border: 2px solid #6b5528;
+      border-radius: 14px;
+      max-width: 420px; width: 100%;
+      max-height: 88vh; overflow-y: auto;
+      padding: 28px 24px; text-align: center;
+    }
+    .admin-sello { font-size: 2.4rem; margin-bottom: 6px; }
+    #admin-caja h3 { letter-spacing: 3px; color: #e8c24a; margin: 0 0 10px; font-size: 1.1rem; }
+    .admin-nota { font-size: 0.85rem; opacity: 0.75; line-height: 1.4; margin-bottom: 18px; }
+    #admin-clave {
+      width: 100%; padding: 14px; font-size: 1rem;
+      background: #0d0a04; border: 1px solid #6b5528; border-radius: 8px;
+      color: #f4e4c1; font-family: inherit; text-align: center; letter-spacing: 2px;
+      margin-bottom: 10px;
+    }
+    .admin-error { color: #e57373; font-size: 0.85rem; min-height: 20px; margin-bottom: 8px; }
     
     /* ==========================================================
        BARRA DE NAVEGACIÓN INFERIOR
@@ -319,7 +350,7 @@
 
     <!-- ================= INICIO ================= -->
     <section class="pantalla activa" id="p-inicio">
-      <h1>🏴‍☠️ La Aventura de la Capitana Karen</h1>
+      <h1 id="emblema">🏴‍☠️ La Aventura de la Capitana Karen</h1>
       <div class="sub" id="oficial">cargando…</div>
 
       <div class="tarjeta">
@@ -409,6 +440,31 @@
   </div>
     <!-- Lluvia de destellos de la celebración -->
   <div id="cel-destellos"></div>
+    <!-- ============ MODO PRIMER OFICIAL (oculto) ============ -->
+  <div id="admin-fondo">
+    <div id="admin-caja">
+      <div id="admin-login">
+        <div class="admin-sello">⚓</div>
+        <h3>ACCESO RESTRINGIDO</h3>
+        <p class="admin-nota">Solo el Primer Oficial puede acceder a la configuración de la expedición.</p>
+        <input type="password" id="admin-clave" placeholder="Clave del Primer Oficial" autocomplete="off">
+        <div id="admin-error" class="admin-error"></div>
+        <button class="modal-btn" onclick="intentarLogin()">ACCEDER</button>
+        <button class="modal-btn secundario" onclick="cerrarAdmin()">Cancelar</button>
+      </div>
+
+      <div id="admin-panel" style="display:none;">
+        <button class="modal-cerrar" onclick="cerrarAdmin()">&times;</button>
+        <div class="admin-sello">⚓</div>
+        <h3>MODO PRIMER OFICIAL</h3>
+        <p class="admin-nota" id="admin-sesion-info">Sesión activa.</p>
+        <div id="admin-herramientas">
+          <p style="opacity:0.7;font-style:italic;">Las herramientas de administración aparecerán aquí.</p>
+        </div>
+        <button class="modal-btn secundario" onclick="logoutAdmin()">Cerrar sesión</button>
+      </div>
+    </div>
+  </div>
   
   <script>
     // ⚓ Dirección del cerebro (Apps Script). Pega tu URL /exec:
@@ -652,6 +708,82 @@
       // Cierra solo si se toca el fondo oscuro, no la caja.
       if (ev.target.id === 'modal-fondo') cerrarModal();
     }
+
+        // ==========================================================
+    //  MODO PRIMER OFICIAL — acceso secreto y login
+    // ==========================================================
+
+    // El token vive solo en memoria (no se guarda permanente).
+    let adminToken = null;
+
+    // --- Detección de los 5 toques secretos en el emblema ---
+    let toquesEmblema = 0;
+    let toquesTimer = null;
+    function registrarToqueEmblema() {
+      toquesEmblema++;
+      if (toquesTimer) clearTimeout(toquesTimer);
+      // Si pasan 1.5s sin tocar, se reinicia el conteo.
+      toquesTimer = setTimeout(function() { toquesEmblema = 0; }, 1500);
+
+      if (toquesEmblema >= 5) {
+        toquesEmblema = 0;
+        abrirAdmin();
+      }
+    }
+
+    // --- Abrir / cerrar el panel ---
+    function abrirAdmin() {
+      // Mostrar login o panel según si ya hay sesión.
+      document.getElementById('admin-error').textContent = '';
+      document.getElementById('admin-clave').value = '';
+      if (adminToken) {
+        mostrarPanelAdmin();
+      } else {
+        document.getElementById('admin-login').style.display = 'block';
+        document.getElementById('admin-panel').style.display = 'none';
+      }
+      document.getElementById('admin-fondo').classList.add('abierto');
+    }
+    function cerrarAdmin() {
+      document.getElementById('admin-fondo').classList.remove('abierto');
+    }
+
+    // --- Intentar iniciar sesión ---
+    function intentarLogin() {
+      const clave = document.getElementById('admin-clave').value;
+      const errorEl = document.getElementById('admin-error');
+      errorEl.textContent = 'Verificando…';
+
+      fetch(URL_CEREBRO + '?accion=login&clave=' + encodeURIComponent(clave))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.ok) {
+            adminToken = d.token;
+            errorEl.textContent = '';
+            mostrarPanelAdmin();
+          } else {
+            errorEl.textContent = '❌ ' + (d.error || 'Acceso denegado.');
+          }
+        })
+        .catch(function() {
+          errorEl.textContent = 'La brújula perdió la señal. Intenta de nuevo.';
+        });
+    }
+
+    // --- Mostrar el panel una vez autenticado ---
+    function mostrarPanelAdmin() {
+      document.getElementById('admin-login').style.display = 'none';
+      document.getElementById('admin-panel').style.display = 'block';
+    }
+
+    // --- Cerrar sesión ---
+    function logoutAdmin() {
+      if (adminToken) {
+        fetch(URL_CEREBRO + '?accion=logout&token=' + encodeURIComponent(adminToken));
+      }
+      adminToken = null;
+      cerrarAdmin();
+    }
     
     // -------- Cargar el estado del juego al abrir la app --------
     function cargarEstado() {
@@ -666,6 +798,12 @@
 
     // Iniciar la carga en cuanto la página esté lista.
     cargarEstado();
+
+    // Activar el acceso secreto (5 toques en el emblema).
+    (function() {
+      var emblema = document.getElementById('emblema');
+      if (emblema) emblema.addEventListener('click', registrarToqueEmblema);
+    })();
     // ==========================================================
     //  MOTOR DEL MAPA INTERACTIVO (zoom y arrastre) — v2
     // ==========================================================
