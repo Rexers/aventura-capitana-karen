@@ -5,61 +5,232 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>La Aventura de la Capitana Karen</title>
   <style>
-    /* Estilo temporal y sencillo. El diseño pirata real
-       llegará en un paso posterior. Esto confirma que la cara
-       (Netlify) y el cerebro (Apps Script) ya se comunican. */
+    /* ==========================================================
+       ESTILO TEMPORAL — el diseño pirata real llega después.
+       Ahora solo probamos que la navegación funcione.
+       ========================================================== */
+    * { box-sizing: border-box; }
+    :root {
+      /* Respeta las zonas seguras del iPhone (notch / barra inferior) */
+      padding-top: env(safe-area-inset-top, 0px);
+    }
+    html, body { height: 100%; margin: 0; }
     body {
       font-family: Georgia, 'Times New Roman', serif;
       background: #1c2b3a;
       color: #f4e4c1;
-      margin: 0;
-      padding: 24px;
       -webkit-text-size-adjust: 100%;
+      display: flex;
+      flex-direction: column;
     }
+
+    /* Zona donde se muestran las pantallas */
+    #contenido {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 18px 100px; /* espacio inferior para no tapar con la barra */
+    }
+
+    /* Cada "pantalla" se oculta salvo la activa */
+    .pantalla { display: none; max-width: 520px; margin: 0 auto; }
+    .pantalla.activa { display: block; }
+
+    h1 { font-size: 1.4rem; line-height: 1.3; margin: 0 0 4px; text-align: center; }
+    h2 { font-size: 1.2rem; margin: 0 0 12px; }
+    .sub { opacity: 0.8; font-size: 0.9rem; margin-bottom: 20px; text-align: center; }
+
+    /* --- Tarjeta de Inicio --- */
     .tarjeta {
-      max-width: 480px;
-      margin: 40px auto;
       background: rgba(0,0,0,0.25);
       border: 1px solid #8a6d3b;
       border-radius: 12px;
-      padding: 24px;
+      padding: 20px;
       text-align: center;
+      margin-bottom: 16px;
     }
-    h1 { font-size: 1.5rem; line-height: 1.3; margin: 0 0 4px; }
-    .sub { opacity: 0.8; font-size: 0.95rem; margin-bottom: 20px; }
-    .dato { font-size: 1.1rem; margin: 10px 0; }
-    .berries { font-size: 1.6rem; font-weight: bold; color: #e8c24a; }
-    .barra { background: rgba(255,255,255,0.1); border-radius: 20px; height: 18px; overflow: hidden; margin: 8px 0; }
-    .barra > div { background: #c0392b; height: 100%; width: 0%; transition: width 0.6s; }
-    .mision { margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.15); }
+    .dato { font-size: 1.05rem; margin: 8px 0; }
+    .berries { font-size: 1.5rem; font-weight: bold; color: #e8c24a; }
+    .barra-prog { background: rgba(255,255,255,0.1); border-radius: 20px; height: 16px; overflow: hidden; margin: 8px 0; }
+    .barra-prog > div { background: #c0392b; height: 100%; width: 0%; transition: width 0.6s; }
     .cargando { opacity: 0.6; font-style: italic; }
+
+    /* --- Tarjetas "puente de mando" del Inicio --- */
+    .accesos { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 8px; }
+    .acceso {
+      background: rgba(0,0,0,0.2);
+      border: 1px solid #6b5528;
+      border-radius: 10px;
+      padding: 14px 8px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    .acceso .ic { font-size: 1.4rem; display: block; margin-bottom: 4px; }
+
+    /* --- Placeholder de secciones aún no construidas --- */
+    .placeholder {
+      text-align: center;
+      opacity: 0.7;
+      padding: 40px 10px;
+      font-style: italic;
+    }
+
+    /* ==========================================================
+       BARRA DE NAVEGACIÓN INFERIOR
+       ========================================================== */
+    #nav {
+      display: flex;
+      background: #14202c;
+      border-top: 1px solid #3a2f1a;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    .nav-btn {
+      flex: 1;
+      background: none;
+      border: none;
+      color: #cbb489;
+      padding: 10px 4px;
+      font-size: 0.72rem;
+      font-family: inherit;
+      cursor: pointer;
+      opacity: 0.7;
+      transition: opacity 0.2s, color 0.2s;
+    }
+    .nav-btn .ic { font-size: 1.3rem; display: block; margin-bottom: 2px; }
+    .nav-btn.activa { opacity: 1; color: #f4e4c1; }
+
+    /* --- Menú "Más" desplegable --- */
+    #menu-mas {
+      display: none;
+      position: fixed;
+      bottom: 64px;
+      left: 0; right: 0;
+      background: #14202c;
+      border-top: 1px solid #3a2f1a;
+      padding: 8px;
+      z-index: 10;
+    }
+    #menu-mas.abierto { display: flex; justify-content: space-around; }
+    #menu-mas button {
+      background: none; border: none; color: #f4e4c1;
+      font-family: inherit; font-size: 0.8rem; padding: 12px; cursor: pointer;
+    }
+    #menu-mas .ic { font-size: 1.4rem; display: block; margin-bottom: 4px; }
   </style>
 </head>
 <body>
-  <div class="tarjeta">
-    <h1>🏴‍☠️ La Aventura de la Capitana Karen</h1>
-    <div class="sub" id="oficial">cargando…</div>
 
-    <div class="dato">CAPITANA: <strong id="capitana">…</strong></div>
+  <div id="contenido">
 
-    <div class="dato">EXPEDICIÓN</div>
-    <div class="barra"><div id="barra"></div></div>
-    <div id="progreso" class="cargando">…</div>
+    <!-- ================= INICIO ================= -->
+    <section class="pantalla activa" id="p-inicio">
+      <h1>🏴‍☠️ La Aventura de la Capitana Karen</h1>
+      <div class="sub" id="oficial">cargando…</div>
 
-    <div class="dato berries" id="berries">…</div>
+      <div class="tarjeta">
+        <div class="dato">CAPITANA: <strong id="capitana">…</strong></div>
+        <div class="dato">EXPEDICIÓN</div>
+        <div class="barra-prog"><div id="barra"></div></div>
+        <div id="progreso" class="cargando">…</div>
+        <div class="dato berries" id="berries">…</div>
+        <div style="margin-top:14px;">⚓ MISIÓN ACTUAL</div>
+        <div id="mision" class="cargando">…</div>
+      </div>
 
-    <div class="mision">
-      <div>⚓ MISIÓN ACTUAL</div>
-      <div id="mision" class="cargando">…</div>
-    </div>
+      <!-- Accesos tipo "puente de mando" (idea de la Opción B) -->
+      <div class="accesos">
+        <div class="acceso" onclick="irA('archivo')"><span class="ic">📖</span>Archivo</div>
+        <div class="acceso" onclick="irA('inventario')"><span class="ic">🎒</span>Inventario</div>
+        <div class="acceso" onclick="irA('bitacora')"><span class="ic">📓</span>Bitácora</div>
+      </div>
+    </section>
+
+    <!-- ================= MAPA ================= -->
+    <section class="pantalla" id="p-mapa">
+      <h2>🗺️ Mapa</h2>
+      <div class="placeholder">Aquí desplegaremos la carta náutica de la expedición.</div>
+    </section>
+
+    <!-- ================= MISIONES ================= -->
+    <section class="pantalla" id="p-misiones">
+      <h2>⚔️ Misiones</h2>
+      <div class="placeholder">Aquí aparecerán las misiones de la aventura.</div>
+    </section>
+
+    <!-- ================= TESORO ================= -->
+    <section class="pantalla" id="p-tesoro">
+      <h2>🏴‍☠️ Tesoro de la Capitana</h2>
+      <div class="placeholder">Aquí estará el mercado de recompensas.</div>
+    </section>
+
+    <!-- ================= ARCHIVO ================= -->
+    <section class="pantalla" id="p-archivo">
+      <h2>📖 Archivo de la Expedición</h2>
+      <div class="placeholder">Aquí se guardará el libro de los descubrimientos.</div>
+    </section>
+
+    <!-- ================= INVENTARIO ================= -->
+    <section class="pantalla" id="p-inventario">
+      <h2>🎒 Inventario</h2>
+      <div class="placeholder">Aquí estará el equipo de la Capitana.</div>
+    </section>
+
+    <!-- ================= BITÁCORA ================= -->
+    <section class="pantalla" id="p-bitacora">
+      <h2>📓 Bitácora</h2>
+      <div class="placeholder">Aquí la Capitana escribirá su diario de viaje.</div>
+    </section>
+
   </div>
 
+  <!-- Menú "Más" (secciones secundarias) -->
+  <div id="menu-mas">
+    <button onclick="irA('archivo')"><span class="ic">📖</span>Archivo</button>
+    <button onclick="irA('inventario')"><span class="ic">🎒</span>Inventario</button>
+    <button onclick="irA('bitacora')"><span class="ic">📓</span>Bitácora</button>
+  </div>
+
+  <!-- Barra de navegación inferior -->
+  <nav id="nav">
+    <button class="nav-btn activa" data-p="inicio" onclick="irA('inicio')"><span class="ic">🏠</span>Inicio</button>
+    <button class="nav-btn" data-p="mapa" onclick="irA('mapa')"><span class="ic">🗺️</span>Mapa</button>
+    <button class="nav-btn" data-p="misiones" onclick="irA('misiones')"><span class="ic">⚔️</span>Misiones</button>
+    <button class="nav-btn" data-p="tesoro" onclick="irA('tesoro')"><span class="ic">🪙</span>Tesoro</button>
+    <button class="nav-btn" data-p="mas" onclick="toggleMas()"><span class="ic">☰</span>Más</button>
+  </nav>
+
   <script>
-    // ⚓ La dirección del cerebro (Apps Script).
-    // Reemplaza el texto de abajo por tu URL que termina en /exec
+    // ⚓ Dirección del cerebro (Apps Script). Pega tu URL /exec:
     const URL_CEREBRO = "https://script.google.com/macros/s/AKfycbw70-gJwLl8OMSQ9RId5b9rgjJKkJP3zfVv4W4_piEWYezPH-sKHCMf7deFiVurNXvc/exec";
 
-    // Pinta los datos recibidos en la pantalla.
+    // -------- NAVEGACIÓN entre pantallas --------
+    function irA(nombre) {
+      // Ocultar todas y mostrar la elegida
+      document.querySelectorAll('.pantalla').forEach(function(p) {
+        p.classList.remove('activa');
+      });
+      var destino = document.getElementById('p-' + nombre);
+      if (destino) destino.classList.add('activa');
+
+      // Marcar el botón activo de la barra (si aplica)
+      document.querySelectorAll('.nav-btn').forEach(function(b) {
+        b.classList.toggle('activa', b.getAttribute('data-p') === nombre);
+      });
+
+      // Cerrar el menú "Más" y subir el scroll
+      cerrarMas();
+      document.getElementById('contenido').scrollTop = 0;
+    }
+
+    // -------- Menú "Más" --------
+    function toggleMas() {
+      document.getElementById('menu-mas').classList.toggle('abierto');
+    }
+    function cerrarMas() {
+      document.getElementById('menu-mas').classList.remove('abierto');
+    }
+
+    // -------- Cargar datos del Inicio desde el cerebro --------
     function pintarEstado(estado) {
       document.getElementById('capitana').textContent = estado.capitana;
       document.getElementById('oficial').textContent = 'Primer Oficial: ' + estado.primer_oficial;
@@ -68,31 +239,20 @@
         estado.progreso.descubiertos + ' / ' + estado.progreso.total + ' territorios (' + estado.progreso.porcentaje + '%)';
       document.getElementById('progreso').classList.remove('cargando');
       document.getElementById('barra').style.width = estado.progreso.porcentaje + '%';
-
       var mision = document.getElementById('mision');
       mision.textContent = estado.mision_actual ? estado.mision_actual.titulo : '(sin misión activa)';
       mision.classList.remove('cargando');
     }
-
-    // Muestra un mensaje amable si algo falla (nunca error técnico).
     function mostrarError() {
       document.getElementById('oficial').textContent =
         'La brújula perdió temporalmente la señal. Intenta nuevamente.';
     }
 
-    // Pide el estado del juego al cerebro y lo pinta.
     fetch(URL_CEREBRO + '?accion=estado')
-      .then(function(respuesta) { return respuesta.json(); })
-      .then(function(datos) {
-        if (datos.ok) {
-          pintarEstado(datos.estado);
-        } else {
-          mostrarError();
-        }
-      })
-      .catch(function() {
-        mostrarError();
-      });
+      .then(function(r) { return r.json(); })
+      .then(function(d) { if (d.ok) pintarEstado(d.estado); else mostrarError(); })
+      .catch(function() { mostrarError(); });
   </script>
+
 </body>
 </html>
