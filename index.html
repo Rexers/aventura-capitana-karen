@@ -315,6 +315,43 @@
     .mis-evidencia { font-size: 0.72rem; color: #8fae8f; margin-top: 8px; font-style: italic; }
 
     /* ==========================================================
+       INVENTARIO (cuadrícula tipo videojuego)
+       ========================================================== */
+    .inv-cat-tit {
+      font-size: 0.85rem; letter-spacing: 1.5px; text-transform: uppercase;
+      color: #cbb489; margin: 18px 0 12px;
+    }
+    .inv-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .inv-slot {
+      background: linear-gradient(145deg, #2a1d0e, #1c1308);
+      border: 1px solid #6b5528;
+      border-radius: 10px;
+      padding: 14px 8px;
+      text-align: center;
+      cursor: pointer;
+      aspect-ratio: 1 / 1;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      transition: transform 0.12s, border-color 0.2s;
+    }
+    .inv-slot:active { transform: scale(0.95); }
+    .inv-slot .inv-ic { font-size: 2rem; margin-bottom: 6px; line-height: 1; }
+    .inv-slot .inv-nombre { font-size: 0.72rem; color: #f4e4c1; line-height: 1.2; }
+
+    /* El objeto clasificado se ve misterioso */
+    .inv-slot.clasificado {
+      background: linear-gradient(145deg, #1a1a22, #0d0d14);
+      border-color: #4a4a66;
+      border-style: dashed;
+    }
+    .inv-slot.clasificado .inv-ic { color: #8a8ab0; }
+    .inv-slot.clasificado .inv-nombre { color: #8a8ab0; letter-spacing: 1px; }
+    
+    /* ==========================================================
        CELEBRACIÓN DE DESCUBRIMIENTO (elegante)
        ========================================================== */
     .cel-titulo {
@@ -533,7 +570,10 @@
     <!-- ================= INVENTARIO ================= -->
     <section class="pantalla" id="p-inventario">
       <h2>🎒 Inventario</h2>
-      <div class="placeholder">Aquí estará el equipo de la Capitana.</div>
+      <div id="inv-equipo-tit" class="inv-cat-tit">Equipo inicial</div>
+      <div id="inv-equipo" class="inv-grid"><!-- slots por JS --></div>
+      <div id="inv-descubiertos-tit" class="inv-cat-tit" style="display:none;">Objetos descubiertos</div>
+      <div id="inv-descubiertos" class="inv-grid"><!-- slots por JS --></div>
     </section>
 
     <!-- ================= BITÁCORA ================= -->
@@ -720,6 +760,12 @@
         LISTA_MISIONES = estado.misiones;
         pintarMisiones();
       }
+
+      // Guardar y pintar el inventario.
+      if (estado.inventario) {
+        LISTA_INVENTARIO = estado.inventario;
+        pintarInventario();
+      }
     }
     function mostrarError() {
       document.getElementById('oficial').textContent =
@@ -879,6 +925,88 @@
         '<button class="modal-btn secundario" onclick="cerrarModal()">Cerrar</button>'
       );
     }
+
+    // ==========================================================
+    //  INVENTARIO (cuadrícula tipo videojuego)
+    // ==========================================================
+    let LISTA_INVENTARIO = [];
+
+    // Íconos temporales por objeto (se reemplazarán por imágenes reales
+    // en la fase de diseño). Por id, con un ícono por defecto.
+    const ICONOS_INV = {
+      'inv01': '👒', // sombrero
+      'inv02': '🧥', // ruana
+      'inv03': '🛂', // documento
+      'inv04': '🪪', // identificación
+      'inv05': '🥾', // calzado
+      'inv06': '❤️', // espíritu de aventura
+      'inv07': '❓'  // objeto desconocido
+    };
+
+    function pintarInventario() {
+      if (!LISTA_INVENTARIO.length) return;
+
+      const equipo = LISTA_INVENTARIO.filter(function(o) { return o.categoria === 'equipo_inicial'; });
+      const descubiertos = LISTA_INVENTARIO.filter(function(o) { return o.categoria === 'descubierto'; });
+
+      document.getElementById('inv-equipo').innerHTML = equipo.map(slotHtml_).join('');
+
+      // La categoría "descubiertos" solo se muestra si hay objetos.
+      const titDesc = document.getElementById('inv-descubiertos-tit');
+      const contDesc = document.getElementById('inv-descubiertos');
+      if (descubiertos.length > 0) {
+        titDesc.style.display = 'block';
+        contDesc.innerHTML = descubiertos.map(slotHtml_).join('');
+      } else {
+        titDesc.style.display = 'none';
+        contDesc.innerHTML = '';
+      }
+    }
+
+    // Genera el HTML de un slot del inventario.
+    function slotHtml_(o) {
+      const icono = ICONOS_INV[o.id] || (o.clasificado ? '❓' : '📦');
+      const claseClasif = o.clasificado ? ' clasificado' : '';
+      return '<div class="inv-slot' + claseClasif + '" onclick="abrirObjeto(\'' + o.id + '\')">' +
+               '<div class="inv-ic">' + icono + '</div>' +
+               '<div class="inv-nombre">' + o.nombre + '</div>' +
+             '</div>';
+    }
+
+    // Abre el detalle de un objeto (o los datos clasificados si es secreto).
+    function abrirObjeto(idObjeto) {
+      const o = LISTA_INVENTARIO.find(function(x) { return x.id === idObjeto; });
+      if (!o) return;
+
+      if (o.clasificado) {
+        // OBJETO SECRETO: solo datos clasificados, nada real.
+        mostrarModal(
+          '<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
+          '<div style="font-size:2.4rem;margin-bottom:6px;">&#10067;</div>' +
+          '<h3>OBJETO DESCONOCIDO</h3>' +
+          '<div style="text-align:left;font-size:0.9rem;line-height:2;margin:14px auto;max-width:260px;color:#cbb489;">' +
+            'Función: <strong style="color:#8a8ab0;">CLASIFICADA</strong><br>' +
+            'Origen: <strong style="color:#8a8ab0;">CLASIFICADO</strong><br>' +
+            'Propósito: <strong style="color:#8a8ab0;">DESCONOCIDO</strong><br>' +
+            'Estado: <strong style="color:#8a8ab0;">EN POSESIÓN DE LA CAPITANA</strong>' +
+          '</div>' +
+          '<button class="modal-btn secundario" onclick="cerrarModal()">Cerrar</button>'
+        );
+        return;
+      }
+
+      // Objeto normal.
+      const icono = ICONOS_INV[o.id] || '📦';
+      mostrarModal(
+        '<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
+        '<div style="font-size:2.4rem;margin-bottom:6px;">' + icono + '</div>' +
+        '<h3>' + o.nombre + '</h3>' +
+        '<p>' + (o.descripcion || '') + '</p>' +
+        (o.contenido_secreto ? '<p style="color:#e8c24a;">' + o.contenido_secreto + '</p>' : '') +
+        '<button class="modal-btn secundario" onclick="cerrarModal()">Cerrar</button>'
+      );
+    }
+    
     // ==========================================================
     //  VENTANA EMERGENTE DE TERRITORIO
     // ==========================================================
