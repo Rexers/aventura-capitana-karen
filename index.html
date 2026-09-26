@@ -273,7 +273,46 @@
       font-size: 0.9rem;
     }
     .pagina-blanco .sello { font-size: 1.4rem; opacity: 0.5; display: block; margin-bottom: 4px; }
-    
+
+    /* ==========================================================
+       MISIONES
+       ========================================================== */
+    .mis-grupo-tit {
+      font-size: 0.85rem; letter-spacing: 1.5px; text-transform: uppercase;
+      color: #cbb489; margin: 22px 0 12px; padding-bottom: 6px;
+      border-bottom: 1px solid rgba(138,109,59,0.4);
+    }
+    .mis-grupo-tit:first-child { margin-top: 0; }
+
+    .mision {
+      background: rgba(0,0,0,0.22);
+      border: 1px solid #6b5528;
+      border-left: 4px solid #6b5528;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+    }
+    .mision .mis-cab { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+    .mision .mis-titulo { font-size: 1.05rem; color: #f4e4c1; }
+    .mision .mis-desc { font-size: 0.88rem; opacity: 0.85; margin-top: 6px; line-height: 1.45; }
+    .mision .mis-pie { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+    .mis-recompensa { font-size: 0.85rem; color: #e8c24a; font-weight: bold; }
+    .mis-estado {
+      font-size: 0.7rem; letter-spacing: 1px; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 10px; white-space: nowrap;
+    }
+
+    /* Colores por estado */
+    .mision.estado-completada { border-left-color: #d4a017; }
+    .mision.estado-completada .mis-estado { background: rgba(212,160,23,0.2); color: #e8c24a; }
+    .mision.estado-disponible { border-left-color: #c0392b; }
+    .mision.estado-disponible .mis-estado { background: rgba(192,57,43,0.25); color: #f0a89f; }
+    .mision.estado-en_progreso { border-left-color: #d4a017; }
+    .mision.estado-en_progreso .mis-estado { background: rgba(212,160,23,0.15); color: #e8c24a; }
+    .mision.estado-bloqueada { opacity: 0.6; }
+    .mision.estado-bloqueada .mis-estado { background: rgba(255,255,255,0.08); color: #cbb489; }
+    .mis-evidencia { font-size: 0.72rem; color: #8fae8f; margin-top: 8px; font-style: italic; }
+
     /* ==========================================================
        CELEBRACIÓN DE DESCUBRIMIENTO (elegante)
        ========================================================== */
@@ -470,7 +509,9 @@
     <!-- ================= MISIONES ================= -->
     <section class="pantalla" id="p-misiones">
       <h2>⚔️ Misiones</h2>
-      <div class="placeholder">Aquí aparecerán las misiones de la aventura.</div>
+      <div id="misiones-lista">
+        <!-- Las misiones se generan por JavaScript -->
+      </div>
     </section>
 
     <!-- ================= TESORO ================= -->
@@ -672,6 +713,12 @@
         // Refrescar el Archivo con los datos nuevos.
         pintarArchivo();
       }
+
+      // Guardar y pintar las misiones.
+      if (estado.misiones) {
+        LISTA_MISIONES = estado.misiones;
+        pintarMisiones();
+      }
     }
     function mostrarError() {
       document.getElementById('oficial').textContent =
@@ -719,7 +766,66 @@
       });
       cont.innerHTML = html;
     }
-    
+
+        // ==========================================================
+    //  MISIONES (agrupadas por categoría)
+    // ==========================================================
+    let LISTA_MISIONES = [];
+
+    // Nombres bonitos de cada categoría y su orden de aparición.
+    const CATEGORIAS_MIS = [
+      { clave: 'principal',   titulo: '⚓ Misiones Principales' },
+      { clave: 'exploracion', titulo: '🧭 Misiones de Exploración' },
+      { clave: 'memoria',     titulo: '📱 Misiones de Memoria' }
+    ];
+
+    // Etiquetas legibles para cada estado.
+    const ESTADO_MIS_TXT = {
+      'bloqueada':   'Bloqueada',
+      'disponible':  'Disponible',
+      'en_progreso': 'En progreso',
+      'completada':  'Completada'
+    };
+
+    function pintarMisiones() {
+      const cont = document.getElementById('misiones-lista');
+      if (!cont || !LISTA_MISIONES.length) return;
+
+      let html = '';
+
+      // Recorrer cada categoría en orden.
+      CATEGORIAS_MIS.forEach(function(cat) {
+        const delGrupo = LISTA_MISIONES.filter(function(m) {
+          return m.categoria === cat.clave;
+        });
+        if (delGrupo.length === 0) return; // no mostrar grupos vacíos
+
+        html += '<div class="mis-grupo-tit">' + cat.titulo + '</div>';
+
+        delGrupo.forEach(function(m) {
+          const estadoTxt = ESTADO_MIS_TXT[m.estado] || m.estado;
+          html +=
+            '<div class="mision estado-' + m.estado + '">' +
+              '<div class="mis-cab">' +
+                '<div class="mis-titulo">' + m.titulo + '</div>' +
+                '<div class="mis-estado">' + estadoTxt + '</div>' +
+              '</div>' +
+              '<div class="mis-desc">' + m.descripcion + '</div>' +
+              (m.requiere_evidencia
+                  ? '<div class="mis-evidencia">📸 Esta misión puede guardar una fotografía</div>'
+                  : '') +
+              '<div class="mis-pie">' +
+                '<span class="mis-recompensa">🪙 ' + m.recompensa + ' Berries</span>' +
+                (m.fecha_completada
+                    ? '<span style="font-size:0.72rem;opacity:0.7;">✔ ' + m.fecha_completada + '</span>'
+                    : '') +
+              '</div>' +
+            '</div>';
+        });
+      });
+
+      cont.innerHTML = html;
+    }
     // ==========================================================
     //  VENTANA EMERGENTE DE TERRITORIO
     // ==========================================================
