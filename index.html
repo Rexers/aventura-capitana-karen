@@ -311,6 +311,7 @@
     .mision.estado-en_progreso .mis-estado { background: rgba(212,160,23,0.15); color: #e8c24a; }
     .mision.estado-bloqueada { opacity: 0.6; }
     .mision.estado-bloqueada .mis-estado { background: rgba(255,255,255,0.08); color: #cbb489; }
+    .mis-sellada { font-style: italic; opacity: 0.7; }
     .mis-evidencia { font-size: 0.72rem; color: #8fae8f; margin-top: 8px; font-style: italic; }
 
     /* ==========================================================
@@ -804,49 +805,77 @@
 
         delGrupo.forEach(function(m) {
           const estadoTxt = ESTADO_MIS_TXT[m.estado] || m.estado;
-          html +=
-            '<div class="mision estado-' + m.estado + '" style="cursor:pointer;" onclick="abrirMision(\'' + m.id + '\')">' +
-              '<div class="mis-cab">' +
-                '<div class="mis-titulo">' + m.titulo + '</div>' +
-                '<div class="mis-estado">' + estadoTxt + '</div>' +
-              '</div>' +
-              '<div class="mis-desc">' + m.descripcion + '</div>' +
-              (m.requiere_evidencia
-                  ? '<div class="mis-evidencia">📸 Esta misión puede guardar una fotografía</div>'
-                  : '') +
-              '<div class="mis-pie">' +
-                '<span class="mis-recompensa">🪙 ' + m.recompensa + ' Berries</span>' +
-                (m.fecha_completada
-                    ? '<span style="font-size:0.72rem;opacity:0.7;">✔ ' + m.fecha_completada + '</span>'
+          const bloqueada = (m.estado === 'bloqueada');
+
+          if (bloqueada) {
+            // Pergamino sellado: solo título y "sellada", sin contenido.
+            html +=
+              '<div class="mision estado-bloqueada" style="cursor:pointer;" onclick="abrirMision(\'' + m.id + '\')">' +
+                '<div class="mis-cab">' +
+                  '<div class="mis-titulo">' + m.titulo + '</div>' +
+                  '<div class="mis-estado">Sellada</div>' +
+                '</div>' +
+                '<div class="mis-desc mis-sellada">Aún no es momento de descubrir esta misión…</div>' +
+              '</div>';
+          } else {
+            html +=
+              '<div class="mision estado-' + m.estado + '" style="cursor:pointer;" onclick="abrirMision(\'' + m.id + '\')">' +
+                '<div class="mis-cab">' +
+                  '<div class="mis-titulo">' + m.titulo + '</div>' +
+                  '<div class="mis-estado">' + estadoTxt + '</div>' +
+                '</div>' +
+                '<div class="mis-desc">' + (m.descripcion || '') + '</div>' +
+                (m.requiere_evidencia
+                    ? '<div class="mis-evidencia">📸 Esta misión puede guardar una fotografía</div>'
                     : '') +
-              '</div>' +
-            '</div>';
+                '<div class="mis-pie">' +
+                  '<span class="mis-recompensa">🪙 ' + (m.recompensa || 0) + ' Berries</span>' +
+                  (m.fecha_completada
+                      ? '<span style="font-size:0.72rem;opacity:0.7;">✔ ' + m.fecha_completada + '</span>'
+                      : '') +
+                '</div>' +
+              '</div>';
+          }
         });
       });
 
       cont.innerHTML = html;
     }
-        // Muestra el detalle informativo de una misión (solo lectura).
+    // Muestra el detalle informativo de una misión (solo lectura).
     function abrirMision(idMision) {
       const m = LISTA_MISIONES.find(function(x) { return x.id === idMision; });
       if (!m) return;
 
-      // Nombre bonito de la categoría.
       const catInfo = CATEGORIAS_MIS.find(function(c) { return c.clave === m.categoria; });
       const catTxt = catInfo ? catInfo.titulo : m.categoria;
-      const estadoTxt = ESTADO_MIS_TXT[m.estado] || m.estado;
 
+      // Si está bloqueada: no revelar nada de su contenido.
+      if (m.estado === 'bloqueada') {
+        mostrarModal(
+          '<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
+          '<div style="font-size:0.75rem;letter-spacing:1.5px;text-transform:uppercase;color:#cbb489;margin-bottom:6px;">' + catTxt + '</div>' +
+          '<h3>' + m.titulo + '</h3>' +
+          '<div style="font-size:2rem;opacity:0.5;margin:10px 0;">&#9906;</div>' +
+          '<p><em>Esta misión permanece sellada.</em></p>' +
+          '<p style="opacity:0.8;">Su secreto se revelará cuando llegue su momento en la travesía.</p>' +
+          '<button class="modal-btn secundario" onclick="cerrarModal()">Entendido</button>'
+        );
+        return;
+      }
+
+      // Misión desbloqueada: mostrar su detalle completo.
+      const estadoTxt = ESTADO_MIS_TXT[m.estado] || m.estado;
       mostrarModal(
         '<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
         '<div style="font-size:0.75rem;letter-spacing:1.5px;text-transform:uppercase;color:#cbb489;margin-bottom:6px;">' + catTxt + '</div>' +
         '<h3>' + m.titulo + '</h3>' +
         '<div style="font-size:0.8rem;color:#cbb489;margin-bottom:14px;">Estado: ' + estadoTxt +
           (m.fecha_completada ? ' · ' + m.fecha_completada : '') + '</div>' +
-        '<p>' + m.descripcion + '</p>' +
+        '<p>' + (m.descripcion || '') + '</p>' +
         (m.requiere_evidencia
             ? '<p style="font-size:0.82rem;color:#8fae8f;font-style:italic;">Esta misión puede guardar una fotografía como recuerdo.</p>'
             : '') +
-        '<div style="font-size:1.2rem;color:#e8c24a;font-weight:bold;margin:14px 0;">🪙 ' + m.recompensa + ' Berries</div>' +
+        '<div style="font-size:1.2rem;color:#e8c24a;font-weight:bold;margin:14px 0;">🪙 ' + (m.recompensa || 0) + ' Berries</div>' +
         '<button class="modal-btn secundario" onclick="cerrarModal()">Cerrar</button>'
       );
     }
