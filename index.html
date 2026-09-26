@@ -225,7 +225,55 @@
       background: none; border: none; color: #cbb489;
       font-size: 1.4rem; float: right; cursor: pointer; margin: -8px -6px 0 0;
     }
+    
+    /* ==========================================================
+       ARCHIVO DE LA EXPEDICIÓN (el libro que se llena)
+       ========================================================== */
+    .archivo-progreso {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #cbb489;
+      letter-spacing: 1px;
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(138,109,59,0.4);
+    }
+    .archivo-progreso strong { color: #e8c24a; font-size: 1.1rem; }
 
+    /* Página escrita (territorio descubierto) */
+    .pagina {
+      background: linear-gradient(135deg, #2a1d0e, #22160c);
+      border: 1px solid #8a6d3b;
+      border-left: 4px solid #d4a017;
+      border-radius: 8px;
+      padding: 16px 18px;
+      margin-bottom: 14px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .pagina:active { transform: scale(0.98); }
+    .pagina .pag-clave { font-size: 1.2rem; color: #f4e4c1; margin-bottom: 2px; }
+    .pagina .pag-real { font-size: 0.9rem; color: #e8c24a; font-style: italic; }
+    .pagina .pag-fecha {
+      font-size: 0.75rem; color: #cbb489; margin-top: 8px;
+      letter-spacing: 1px; text-transform: uppercase;
+    }
+    .pagina .pag-ver { font-size: 0.8rem; color: #cbb489; margin-top: 6px; opacity: 0.8; }
+
+    /* Página en blanco (territorio por descubrir) */
+    .pagina-blanco {
+      background: rgba(0,0,0,0.15);
+      border: 1px dashed #5a4a2a;
+      border-radius: 8px;
+      padding: 18px;
+      margin-bottom: 14px;
+      text-align: center;
+      color: #6b5a3a;
+      font-style: italic;
+      font-size: 0.9rem;
+    }
+    .pagina-blanco .sello { font-size: 1.4rem; opacity: 0.5; display: block; margin-bottom: 4px; }
+    
     /* ==========================================================
        CELEBRACIÓN DE DESCUBRIMIENTO (elegante)
        ========================================================== */
@@ -434,7 +482,10 @@
     <!-- ================= ARCHIVO ================= -->
     <section class="pantalla" id="p-archivo">
       <h2>📖 Archivo de la Expedición</h2>
-      <div class="placeholder">Aquí se guardará el libro de los descubrimientos.</div>
+      <div id="archivo-progreso" class="archivo-progreso">…</div>
+      <div id="archivo-lista">
+        <!-- Las entradas se generan por JavaScript -->
+      </div>
     </section>
 
     <!-- ================= INVENTARIO ================= -->
@@ -606,16 +657,20 @@
       // El mapa arrancará enfocado en el primer territorio no descubierto.
       mapaFocoIndice = Math.min(estado.progreso.descubiertos, TERRITORIOS_MAPA.length - 1);
 
-      // Guardar los estados de territorio que llegan del cerebro.
+           // Guardar los estados de territorio que llegan del cerebro.
       if (estado.territorios) {
         ESTADOS_TERRITORIO = {};
         estado.territorios.forEach(function(t) {
           ESTADOS_TERRITORIO[t.id] = t;
         });
+        // Guardar el orden de la lista tal como llega (para el Archivo).
+        LISTA_TERRITORIOS = estado.territorios;
         // Si el mapa ya está pintado, refrescar los marcadores.
         if (mapaIniciado && mapaImg && mapaImg.naturalWidth) {
           pintarMarcadores();
         }
+        // Refrescar el Archivo con los datos nuevos.
+        pintarArchivo();
       }
     }
     function mostrarError() {
@@ -623,6 +678,48 @@
         'La brújula perdió temporalmente la señal. Intenta nuevamente.';
     }
 
+        // ==========================================================
+    //  ARCHIVO DE LA EXPEDICIÓN (el libro que se va llenando)
+    // ==========================================================
+    let LISTA_TERRITORIOS = [];
+
+    function pintarArchivo() {
+      const cont = document.getElementById('archivo-lista');
+      const prog = document.getElementById('archivo-progreso');
+      if (!cont || !LISTA_TERRITORIOS.length) return;
+
+      // Contar descubiertos.
+      const descubiertos = LISTA_TERRITORIOS.filter(function(t) {
+        return t.estado === 'descubierto';
+      }).length;
+      const total = LISTA_TERRITORIOS.length;
+
+      prog.innerHTML = '<strong>' + descubiertos + '</strong> de <strong>' + total +
+                       '</strong> territorios registrados';
+
+      // Dibujar cada territorio: página escrita o página en blanco.
+      let html = '';
+      LISTA_TERRITORIOS.forEach(function(t) {
+        if (t.estado === 'descubierto') {
+          html +=
+            '<div class="pagina" onclick="abrirTerritorio(\'' + t.id + '\')">' +
+              '<div class="pag-clave">' + t.nombre_clave + '</div>' +
+              (t.nombre_real ? '<div class="pag-real">' + t.nombre_real + '</div>' : '') +
+              (t.fecha_descubierto ? '<div class="pag-fecha">Descubierto: ' + t.fecha_descubierto + '</div>' : '') +
+              '<div class="pag-ver">Toca para ver el registro</div>' +
+            '</div>';
+        } else {
+          // Página en blanco: no revela cuál territorio es.
+          html +=
+            '<div class="pagina-blanco">' +
+              '<span class="sello">&#9906;</span>' +
+              'Página por escribir…' +
+            '</div>';
+        }
+      });
+      cont.innerHTML = html;
+    }
+    
     // ==========================================================
     //  VENTANA EMERGENTE DE TERRITORIO
     // ==========================================================
