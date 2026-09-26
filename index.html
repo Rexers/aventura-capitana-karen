@@ -495,6 +495,19 @@
     }
     .admin-peligro { border-color: #7a2a22; }
     .admin-btn-rojo { background: #7a2a22; border-color: #c0392b; }
+        .admin-rew-item {
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(107,85,40,0.3);
+      font-size: 0.85rem;
+    }
+    .admin-rew-item:last-child { border-bottom: none; }
+    .admin-rew-nombre { color: #f4e4c1; }
+    .admin-rew-estado { font-size: 0.72rem; color: #cbb489; }
+    .admin-rew-btn {
+      background: #3a5a40; color: #fff; border: 1px solid #6b8e6f;
+      border-radius: 6px; padding: 6px 10px; font-size: 0.78rem;
+      font-family: inherit; cursor: pointer; white-space: nowrap;
+    }
     .admin-msg { font-size: 0.85rem; margin-top: 8px; min-height: 18px; }
 
     /* ==========================================================
@@ -693,6 +706,14 @@
             <p class="admin-nota" style="margin-top:10px;margin-bottom:0;">Estos ajustes no aparecen en el historial de la Capitana.</p>
           </div>
 
+          <!-- Reabrir recompensas -->
+          <div class="admin-seccion">
+            <div class="admin-seccion-tit">Recompensas canjeadas</div>
+            <p class="admin-nota" style="margin-bottom:10px;">Reabre una recompensa para que la Capitana pueda canjearla de nuevo.</p>
+            <div id="admin-recompensas">—</div>
+            <button class="admin-btn-mini" onclick="adminCargarRecompensas()" style="margin-top:8px;">Ver recompensas</button>
+          </div>
+          
           <!-- Resetear progreso -->
           <div class="admin-seccion admin-peligro">
             <div class="admin-seccion-tit">Zona de peligro</div>
@@ -1498,6 +1519,50 @@
       }
     }
 
+    // --- Reabrir recompensas ---
+    function adminCargarRecompensas() {
+      const el = document.getElementById('admin-recompensas');
+      el.textContent = 'Consultando…';
+      fetch(URL_CEREBRO + '?accion=admin_listar_recompensas&token=' + encodeURIComponent(adminToken))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (!d.ok) { el.textContent = d.error || 'Error.'; manejarSesionExpirada(d); return; }
+          let html = '';
+          d.recompensas.forEach(function(r) {
+            const canjeada = (r.estado === 'canjeada');
+            html +=
+              '<div class="admin-rew-item">' +
+                '<div>' +
+                  '<div class="admin-rew-nombre">' + r.nombre + '</div>' +
+                  '<div class="admin-rew-estado">' + r.estado +
+                    (r.fecha_canjeada ? ' · ' + r.fecha_canjeada : '') + '</div>' +
+                '</div>' +
+                (canjeada
+                    ? '<button class="admin-rew-btn" onclick="adminReabrir(\'' + r.id + '\')">Reabrir</button>'
+                    : '<span class="admin-rew-estado">—</span>') +
+              '</div>';
+          });
+          el.innerHTML = html;
+        })
+        .catch(function() { el.textContent = 'Sin señal.'; });
+    }
+
+    function adminReabrir(idRecompensa) {
+      fetch(URL_CEREBRO + '?accion=admin_reabrir_recompensa&token=' + encodeURIComponent(adminToken) +
+            '&id=' + encodeURIComponent(idRecompensa))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.ok) {
+            adminCargarRecompensas(); // refresca la lista del panel
+            cargarEstado();           // refresca el Tesoro de Karen
+          } else {
+            alert(d.error || 'No se pudo reabrir.');
+            manejarSesionExpirada(d);
+          }
+        })
+        .catch(function() { alert('Sin señal.'); });
+    }    
+    
     // ==========================================================
     //  CARGA INICIAL Y ACTIVACIÓN DEL ACCESO SECRETO
     // ==========================================================
