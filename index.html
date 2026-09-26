@@ -805,7 +805,7 @@
         delGrupo.forEach(function(m) {
           const estadoTxt = ESTADO_MIS_TXT[m.estado] || m.estado;
           html +=
-            '<div class="mision estado-' + m.estado + '">' +
+            '<div class="mision estado-' + m.estado + '" style="cursor:pointer;" onclick="abrirMision(\'' + m.id + '\')">' +
               '<div class="mis-cab">' +
                 '<div class="mis-titulo">' + m.titulo + '</div>' +
                 '<div class="mis-estado">' + estadoTxt + '</div>' +
@@ -825,6 +825,30 @@
       });
 
       cont.innerHTML = html;
+    }
+        // Muestra el detalle informativo de una misión (solo lectura).
+    function abrirMision(idMision) {
+      const m = LISTA_MISIONES.find(function(x) { return x.id === idMision; });
+      if (!m) return;
+
+      // Nombre bonito de la categoría.
+      const catInfo = CATEGORIAS_MIS.find(function(c) { return c.clave === m.categoria; });
+      const catTxt = catInfo ? catInfo.titulo : m.categoria;
+      const estadoTxt = ESTADO_MIS_TXT[m.estado] || m.estado;
+
+      mostrarModal(
+        '<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
+        '<div style="font-size:0.75rem;letter-spacing:1.5px;text-transform:uppercase;color:#cbb489;margin-bottom:6px;">' + catTxt + '</div>' +
+        '<h3>' + m.titulo + '</h3>' +
+        '<div style="font-size:0.8rem;color:#cbb489;margin-bottom:14px;">Estado: ' + estadoTxt +
+          (m.fecha_completada ? ' · ' + m.fecha_completada : '') + '</div>' +
+        '<p>' + m.descripcion + '</p>' +
+        (m.requiere_evidencia
+            ? '<p style="font-size:0.82rem;color:#8fae8f;font-style:italic;">Esta misión puede guardar una fotografía como recuerdo.</p>'
+            : '') +
+        '<div style="font-size:1.2rem;color:#e8c24a;font-weight:bold;margin:14px 0;">🪙 ' + m.recompensa + ' Berries</div>' +
+        '<button class="modal-btn secundario" onclick="cerrarModal()">Cerrar</button>'
+      );
     }
     // ==========================================================
     //  VENTANA EMERGENTE DE TERRITORIO
