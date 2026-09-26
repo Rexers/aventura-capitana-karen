@@ -350,6 +350,40 @@
     }
     .inv-slot.clasificado .inv-ic { color: #8a8ab0; }
     .inv-slot.clasificado .inv-nombre { color: #8a8ab0; letter-spacing: 1px; }
+
+    /* ==========================================================
+       TESORO DE LA CAPITANA (mercado de recompensas)
+       ========================================================== */
+    .tesoro-saldo {
+      text-align: center;
+      font-size: 1.3rem; font-weight: bold; color: #e8c24a;
+      margin-bottom: 18px; padding-bottom: 14px;
+      border-bottom: 1px solid rgba(138,109,59,0.4);
+    }
+    .vale {
+      background: linear-gradient(135deg, #2a1d0e, #22160c);
+      border: 1px solid #8a6d3b;
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .vale .vale-nombre { font-size: 1.1rem; color: #f4e4c1; margin-bottom: 2px; }
+    .vale .vale-desc { font-size: 0.85rem; opacity: 0.85; margin-bottom: 12px; line-height: 1.4; }
+    .vale .vale-pie { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .vale .vale-costo { font-size: 1.05rem; color: #e8c24a; font-weight: bold; white-space: nowrap; }
+    .vale-btn {
+      background: #c0392b; color: #fff; border: 1px solid #f4e4c1;
+      border-radius: 8px; padding: 10px 18px; font-size: 0.9rem;
+      font-family: inherit; cursor: pointer; white-space: nowrap;
+    }
+    .vale-btn:disabled { background: #444; border-color: #666; color: #999; cursor: not-allowed; }
+
+    /* Estados del vale */
+    .vale.estado-canjeada { opacity: 0.6; border-style: dashed; }
+    .vale.estado-canjeada .vale-nombre::after { content: ' ✔'; color: #d4a017; }
+    .vale-faltan { font-size: 0.78rem; color: #e0a0a0; font-style: italic; }
+    .vale-canjeada-txt { font-size: 0.78rem; color: #cbb489; font-style: italic; }
+    .vale.estado-bloqueada { opacity: 0.5; }
     
     /* ==========================================================
        CELEBRACIÓN DE DESCUBRIMIENTO (elegante)
@@ -555,7 +589,10 @@
     <!-- ================= TESORO ================= -->
     <section class="pantalla" id="p-tesoro">
       <h2>🏴‍☠️ Tesoro de la Capitana</h2>
-      <div class="placeholder">Aquí estará el mercado de recompensas.</div>
+      <div id="tesoro-saldo" class="tesoro-saldo">🪙 … Berries</div>
+      <div id="tesoro-lista">
+        <!-- Las recompensas se generan por JavaScript -->
+      </div>
     </section>
 
     <!-- ================= ARCHIVO ================= -->
@@ -765,6 +802,13 @@
       if (estado.inventario) {
         LISTA_INVENTARIO = estado.inventario;
         pintarInventario();
+      }
+
+      // Guardar y pintar el Tesoro (recompensas).
+      SALDO_ACTUAL = estado.berries;
+      if (estado.recompensas) {
+        LISTA_RECOMPENSAS = estado.recompensas;
+        pintarTesoro();
       }
     }
     function mostrarError() {
@@ -1005,6 +1049,113 @@
         (o.contenido_secreto ? '<p style="color:#e8c24a;">' + o.contenido_secreto + '</p>' : '') +
         '<button class="modal-btn secundario" onclick="cerrarModal()">Cerrar</button>'
       );
+    }
+
+    // ==========================================================
+    //  TESORO DE LA CAPITANA (mercado de recompensas)
+    // ==========================================================
+    let LISTA_RECOMPENSAS = [];
+    let SALDO_ACTUAL = 0;
+
+    function pintarTesoro() {
+      const cont = document.getElementById('tesoro-lista');
+      const saldoEl = document.getElementById('tesoro-saldo');
+      if (!cont) return;
+
+      saldoEl.textContent = '🪙 ' + SALDO_ACTUAL + ' Berries';
+
+      if (!LISTA_RECOMPENSAS.length) {
+        cont.innerHTML = '<div class="placeholder">El tesoro está vacío por ahora.</div>';
+        return;
+      }
+
+      let html = '';
+      LISTA_RECOMPENSAS.forEach(function(r) {
+        let accion = '';
+        if (r.estado === 'disponible') {
+          accion = '<button class="vale-btn" onclick="pedirCanje(\'' + r.id + '\')">Canjear</button>';
+        } else if (r.estado === 'sin_fondos') {
+          accion = '<span class="vale-faltan">Te faltan ' + r.faltan + ' 🪙</span>';
+        } else if (r.estado === 'canjeada') {
+          accion = '<span class="vale-canjeada-txt">Canjeada' + (r.fecha_canjeada ? ' · ' + r.fecha_canjeada : '') + '</span>';
+        } else if (r.estado === 'bloqueada') {
+          accion = '<span class="vale-faltan">Bloqueada</span>';
+        }
+
+        html +=
+          '<div class="vale estado-' + r.estado + '">' +
+            '<div class="vale-nombre">' + r.nombre + '</div>' +
+            '<div class="vale-desc">' + r.descripcion + '</div>' +
+            '<div class="vale-pie">' +
+              '<span class="vale-costo">🪙 ' + r.costo + '</span>' +
+              accion +
+            '</div>' +
+          '</div>';
+      });
+      cont.innerHTML = html;
+    }
+
+    // Pide confirmación y canjea.
+    let canjeando = false;
+    function pedirCanje(idRecompensa) {
+      const r = LISTA_RECOMPENSAS.find(function(x) { return x.id === idRecompensa; });
+      if (!r) return;
+
+      mostrarModal(
+        '<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
+        '<h3>' + r.nombre + '</h3>' +
+        '<p>' + r.descripcion + '</p>' +
+        '<div style="font-size:1.3rem;color:#e8c24a;font-weight:bold;margin:14px 0;">Cuesta 🪙 ' + r.costo + ' Berries</div>' +
+        '<p style="font-size:0.85rem;opacity:0.8;">Te quedarán ' + (SALDO_ACTUAL - r.costo) + ' Berries.</p>' +
+        '<button class="modal-btn" onclick="confirmarCanje(\'' + r.id + '\')">Canjear ahora</button>' +
+        '<button class="modal-btn secundario" onclick="cerrarModal()">Todavía no</button>'
+      );
+    }
+
+    function confirmarCanje(idRecompensa) {
+      if (canjeando) return;
+      canjeando = true;
+      mostrarModal('<p style="padding:20px 0;"><em>Abriendo el cofre…</em></p>');
+
+      fetch(URL_CEREBRO + '?accion=canjear&id=' + encodeURIComponent(idRecompensa))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          canjeando = false;
+          if (d.ok) {
+            celebrarCanje(d);
+          } else {
+            mostrarModal(
+              '<h3>Un momento…</h3><p>' + (d.error || 'No se pudo canjear.') +
+              (d.faltan ? ' Te faltan ' + d.faltan + ' Berries.' : '') + '</p>' +
+              '<button class="modal-btn secundario" onclick="cerrarModalYRefrescar()">Cerrar</button>'
+            );
+          }
+        })
+        .catch(function() {
+          canjeando = false;
+          mostrarModal(
+            '<h3>La brújula perdió la señal</h3><p>Intenta nuevamente.</p>' +
+            '<button class="modal-btn secundario" onclick="cerrarModal()">Cerrar</button>'
+          );
+        });
+    }
+
+    function celebrarCanje(d) {
+      mostrarModal(
+        '<div class="cel-titulo">¡Tesoro canjeado!</div>' +
+        '<div class="cel-nombre">' + d.recompensa.nombre + '</div>' +
+        '<div class="cel-real"><small>Disfrútalo, Capitana</small>' + d.recompensa.descripcion + '</div>' +
+        '<div class="cel-berries">−' + d.recompensa.costo + ' Berries</div>' +
+        '<button class="modal-btn cel-boton" onclick="cerrarModalYRefrescar()">¡Reclamado!</button>'
+      );
+      lanzarDestellos();
+    }
+
+    function cerrarModalYRefrescar() {
+      var destellos = document.getElementById('cel-destellos');
+      if (destellos) destellos.innerHTML = '';
+      cerrarModal();
+      cargarEstado();  // refresca saldo, tesoro y todo
     }
     
     // ==========================================================
