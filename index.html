@@ -76,7 +76,7 @@
     }
 
     /* ==========================================================
-    MAPA INTERACTIVO (zoom estilo videojuego) — v2
+       MAPA INTERACTIVO (zoom estilo videojuego) — v2
        ========================================================== */
     /* El mapa ocupa toda la ventana disponible (sin cuadro),
        y como #contenido tiene padding, lo anulamos solo aquí. */
@@ -171,7 +171,7 @@
       70%  { box-shadow: 0 0 0 2px rgba(0,0,0,0.5), 0 0 0 16px rgba(255,80,60,0); }
       100% { box-shadow: 0 0 0 2px rgba(0,0,0,0.5), 0 0 0 0 rgba(255,80,60,0); }
     }
-    
+
     /* ==========================================================
        VENTANA EMERGENTE (modal) — estilo temporal
        ========================================================== */
@@ -223,7 +223,7 @@
       font-size: 1.4rem; float: right; cursor: pointer; margin: -8px -6px 0 0;
     }
 
-        /* ==========================================================
+    /* ==========================================================
        CELEBRACIÓN DE DESCUBRIMIENTO (elegante)
        ========================================================== */
     .cel-titulo {
@@ -270,7 +270,7 @@
       to { transform: translateY(110vh) rotate(360deg); opacity: 0; }
     }
 
-        /* ==========================================================
+    /* ==========================================================
        MODO PRIMER OFICIAL
        ========================================================== */
     #admin-fondo {
@@ -301,7 +301,7 @@
     }
     .admin-error { color: #e57373; font-size: 0.85rem; min-height: 20px; margin-bottom: 8px; }
 
-        .admin-seccion {
+    .admin-seccion {
       background: rgba(0,0,0,0.25);
       border: 1px solid #4a3c1e;
       border-radius: 10px;
@@ -334,7 +334,7 @@
     .admin-peligro { border-color: #7a2a22; }
     .admin-btn-rojo { background: #7a2a22; border-color: #c0392b; }
     .admin-msg { font-size: 0.85rem; margin-top: 8px; min-height: 18px; }
-    
+
     /* ==========================================================
        BARRA DE NAVEGACIÓN INFERIOR
        ========================================================== */
@@ -464,7 +464,7 @@
     <button class="nav-btn" data-p="mas" onclick="toggleMas()"><span class="ic">☰</span>Más</button>
   </nav>
 
-    <!-- ============ VENTANA EMERGENTE (modal) de territorio ============ -->
+  <!-- ============ VENTANA EMERGENTE (modal) de territorio ============ -->
   <div id="modal-fondo" onclick="cerrarModalSiFondo(event)">
     <div id="modal-caja">
       <div id="modal-contenido">
@@ -472,9 +472,11 @@
       </div>
     </div>
   </div>
-    <!-- Lluvia de destellos de la celebración -->
+
+  <!-- Lluvia de destellos de la celebración -->
   <div id="cel-destellos"></div>
-    <!-- ============ MODO PRIMER OFICIAL (oculto) ============ -->
+
+  <!-- ============ MODO PRIMER OFICIAL (oculto) ============ -->
   <div id="admin-fondo">
     <div id="admin-caja">
       <div id="admin-login">
@@ -530,12 +532,14 @@
       </div>
     </div>
   </div>
-  
+
   <script>
     // ⚓ Dirección del cerebro (Apps Script). Pega tu URL /exec:
     const URL_CEREBRO = "https://script.google.com/macros/s/AKfycbw70-gJwLl8OMSQ9RId5b9rgjJKkJP3zfVv4W4_piEWYezPH-sKHCMf7deFiVurNXvc/exec";
 
-    // -------- NAVEGACIÓN entre pantallas --------
+    // ==========================================================
+    //  NAVEGACIÓN entre pantallas
+    // ==========================================================
     function irA(nombre) {
       document.querySelectorAll('.pantalla').forEach(function(p) {
         p.classList.remove('activa');
@@ -581,7 +585,9 @@
       document.getElementById('menu-mas').classList.remove('abierto');
     }
 
-    // -------- Cargar datos del Inicio desde el cerebro --------
+    // ==========================================================
+    //  CARGA DE DATOS DEL INICIO (desde el cerebro)
+    // ==========================================================
     function pintarEstado(estado) {
       document.getElementById('capitana').textContent = estado.capitana;
       document.getElementById('oficial').textContent = 'Primer Oficial: ' + estado.primer_oficial;
@@ -614,7 +620,7 @@
         'La brújula perdió temporalmente la señal. Intenta nuevamente.';
     }
 
-        // ==========================================================
+    // ==========================================================
     //  VENTANA EMERGENTE DE TERRITORIO
     // ==========================================================
 
@@ -774,7 +780,7 @@
       if (ev.target.id === 'modal-fondo') cerrarModal();
     }
 
-        // ==========================================================
+    // ==========================================================
     //  MODO PRIMER OFICIAL — acceso secreto y login
     // ==========================================================
 
@@ -850,7 +856,7 @@
       cerrarAdmin();
     }
 
-        // ==========================================================
+    // ==========================================================
     //  HERRAMIENTAS DEL PANEL (usan el token)
     // ==========================================================
 
@@ -875,7 +881,7 @@
         .catch(function() { el.textContent = 'Sin señal.'; });
     }
 
-    // --- Ajustar Berries ---
+    // --- Ajustar Berries (sumar / restar) ---
     function adminSumarBerries() {
       const monto = document.getElementById('admin-monto').value;
       if (!monto) return;
@@ -894,7 +900,7 @@
         })
         .catch(function() { alert('Sin señal.'); });
     }
-    
+
     // --- Fijar saldo exacto ---
     function adminFijarSaldo() {
       const saldo = document.getElementById('admin-saldo').value;
@@ -915,11 +921,10 @@
         .catch(function() { alert('Sin señal.'); });
     }
 
-    // --- Resetear progreso (con confirmación) ---
+    // --- Resetear progreso (con doble confirmación) ---
     function adminPedirReset() {
       const seguro = confirm('¿Seguro que quieres RESETEAR el progreso?\n\nEsto borra territorios, misiones, Berries y canjes. La bitácora se conserva.\n\nEsta acción no se puede deshacer.');
       if (!seguro) return;
-      // Doble confirmación por ser destructivo.
       const seguro2 = confirm('Última confirmación: ¿resetear la aventura a cero?');
       if (!seguro2) return;
 
@@ -946,7 +951,11 @@
         cerrarAdmin();
       }
     }
-    
+
+    // ==========================================================
+    //  CARGA INICIAL Y ACTIVACIÓN DEL ACCESO SECRETO
+    // ==========================================================
+
     // -------- Cargar el estado del juego al abrir la app --------
     function cargarEstado() {
       fetch(URL_CEREBRO + '?accion=estado')
@@ -966,12 +975,14 @@
       var emblema = document.getElementById('emblema');
       if (emblema) emblema.addEventListener('click', registrarToqueEmblema);
     })();
+
     // ==========================================================
     //  MOTOR DEL MAPA INTERACTIVO (zoom y arrastre) — v2
     // ==========================================================
 
     // Estados de cada territorio (llegan del cerebro). Clave = id.
     let ESTADOS_TERRITORIO = {};
+
     // Posiciones estimadas de los 9 territorios, en % sobre la imagen.
     const TERRITORIOS_MAPA = [
       { id: 'loc01', nombre: 'Valle Dorado',               x: 53.5, y: 11 },
@@ -981,7 +992,7 @@
       { id: 'loc05', nombre: 'La Dama de Piedra',          x: 49,   y: 45 },
       { id: 'loc06', nombre: 'El Nuevo Horizonte',         x: 45,   y: 54 },
       { id: 'loc07', nombre: 'El Oasis Tranquilo',         x: 45,   y: 64 },
-      { id: 'loc08', nombre: 'El Jardín de los Recuerdos',  x: 46,  y: 74 },
+      { id: 'loc08', nombre: 'El Jardín de los Recuerdos', x: 46,   y: 74 },
       { id: 'loc09', nombre: 'El Gran Regreso',            x: 49,   y: 85 }
     ];
 
@@ -1115,10 +1126,10 @@
       let arrastrando = false, ultX = 0, ultY = 0;
       let punteros = {};
       let distanciaPrevia = null, centroPrevio = null;
+      let inicioToque = null;   // para distinguir toque de arrastre
 
       function rectVisor() { return mapaVisor.getBoundingClientRect(); }
 
-      let inicioToque = null;   // para distinguir toque de arrastre
       mapaVisor.addEventListener('pointerdown', function(e) {
         mapaVisor.setPointerCapture(e.pointerId);
         punteros[e.pointerId] = { x: e.clientX, y: e.clientY };
@@ -1169,13 +1180,11 @@
           const dy = e.clientY - inicioToque.y;
           const distancia = Math.hypot(dx, dy);
           const duracion = Date.now() - inicioToque.t;
-          console.log('RASTRO fin: distancia=', distancia.toFixed(1), 'duracion=', duracion);
 
           if (distancia < 10 && duracion < 500) {
             // Buscar el marcador que está bajo el punto donde solté el dedo.
             // (No usamos e.target porque el pointer capture lo altera.)
             const elementos = document.elementsFromPoint(e.clientX, e.clientY);
-            console.log('RASTRO elementos bajo el dedo:', elementos.map(function(x){return x.className || x.tagName;}));
             let marcador = null;
             for (let k = 0; k < elementos.length; k++) {
               if (elementos[k].classList && elementos[k].classList.contains('marcador')) {
@@ -1185,10 +1194,7 @@
             }
             if (marcador) {
               const idTerr = marcador.getAttribute('data-id');
-              console.log('RASTRO marcador tocado:', idTerr);
               if (idTerr) abrirTerritorio(idTerr);
-            } else {
-              console.log('RASTRO: no había marcador en ese punto');
             }
           }
           inicioToque = null;
