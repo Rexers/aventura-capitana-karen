@@ -768,14 +768,22 @@
     }
 
     // -------- Utilidades del modal --------
+    let modalListoParaCerrar = false;
     function mostrarModal(html) {
       document.getElementById('modal-contenido').innerHTML = html;
-      document.getElementById('modal-fondo').classList.add('abierto');
+      const fondo = document.getElementById('modal-fondo');
+      fondo.classList.add('abierto');
+      // Bloquear el cierre por toque durante un instante (evita el "ghost click"
+      // que en móvil cerraría el modal apenas se abre).
+      modalListoParaCerrar = false;
+      setTimeout(function() { modalListoParaCerrar = true; }, 350);
     }
     function cerrarModal() {
       document.getElementById('modal-fondo').classList.remove('abierto');
     }
     function cerrarModalSiFondo(ev) {
+      // No cerrar si el modal acaba de abrirse (protege del "ghost click").
+      if (!modalListoParaCerrar) return;
       // Cierra solo si se toca el fondo oscuro, no la caja.
       if (ev.target.id === 'modal-fondo') cerrarModal();
     }
@@ -1193,8 +1201,13 @@
               }
             }
             if (marcador) {
+              // Evitar el "click fantasma" que en móvil dispararía un cierre.
+              if (e.cancelable) e.preventDefault();
               const idTerr = marcador.getAttribute('data-id');
-              if (idTerr) abrirTerritorio(idTerr);
+              if (idTerr) {
+                // Pequeño respiro para que el gesto táctil termine limpio.
+                setTimeout(function() { abrirTerritorio(idTerr); }, 20);
+              }
             }
           }
           inicioToque = null;
