@@ -1169,12 +1169,26 @@
           const dy = e.clientY - inicioToque.y;
           const distancia = Math.hypot(dx, dy);
           const duracion = Date.now() - inicioToque.t;
-          // Poco movimiento (<8px) y rápido (<400ms) = toque, no arrastre.
-          if (distancia < 8 && duracion < 400) {
-            const marcador = e.target.closest ? e.target.closest('.marcador') : null;
+          console.log('RASTRO fin: distancia=', distancia.toFixed(1), 'duracion=', duracion);
+
+          if (distancia < 10 && duracion < 500) {
+            // Buscar el marcador que está bajo el punto donde solté el dedo.
+            // (No usamos e.target porque el pointer capture lo altera.)
+            const elementos = document.elementsFromPoint(e.clientX, e.clientY);
+            console.log('RASTRO elementos bajo el dedo:', elementos.map(function(x){return x.className || x.tagName;}));
+            let marcador = null;
+            for (let k = 0; k < elementos.length; k++) {
+              if (elementos[k].classList && elementos[k].classList.contains('marcador')) {
+                marcador = elementos[k];
+                break;
+              }
+            }
             if (marcador) {
               const idTerr = marcador.getAttribute('data-id');
+              console.log('RASTRO marcador tocado:', idTerr);
               if (idTerr) abrirTerritorio(idTerr);
+            } else {
+              console.log('RASTRO: no había marcador en ese punto');
             }
           }
           inicioToque = null;
