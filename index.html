@@ -1045,11 +1045,6 @@
         } else {
           m.textContent = (i + 1);          // número (disponible)
         }
-        // Al tocar el marcador, abrir su ventana según el estado.
-        m.addEventListener('click', function(ev) {
-          ev.stopPropagation();
-          abrirTerritorio(t.id);
-        });
         mapaLienzo.appendChild(m);
       });
     }
@@ -1123,10 +1118,13 @@
 
       function rectVisor() { return mapaVisor.getBoundingClientRect(); }
 
+      let inicioToque = null;   // para distinguir toque de arrastre
       mapaVisor.addEventListener('pointerdown', function(e) {
         mapaVisor.setPointerCapture(e.pointerId);
         punteros[e.pointerId] = { x: e.clientX, y: e.clientY };
         arrastrando = true; ultX = e.clientX; ultY = e.clientY;
+        // Recordar el punto y el momento en que empezó (para el "tap").
+        inicioToque = { x: e.clientX, y: e.clientY, t: Date.now(), id: e.pointerId };
       });
 
       mapaVisor.addEventListener('pointermove', function(e) {
@@ -1165,11 +1163,27 @@
       });
 
       function finPuntero(e) {
+        // ¿Fue un TOQUE (tap) y no un arrastre? Medir movimiento y tiempo.
+        if (inicioToque && e.pointerId === inicioToque.id) {
+          const dx = e.clientX - inicioToque.x;
+          const dy = e.clientY - inicioToque.y;
+          const distancia = Math.hypot(dx, dy);
+          const duracion = Date.now() - inicioToque.t;
+          // Poco movimiento (<8px) y rápido (<400ms) = toque, no arrastre.
+          if (distancia < 8 && duracion < 400) {
+            const marcador = e.target.closest ? e.target.closest('.marcador') : null;
+            if (marcador) {
+              const idTerr = marcador.getAttribute('data-id');
+              if (idTerr) abrirTerritorio(idTerr);
+            }
+          }
+          inicioToque = null;
+        }
+
         delete punteros[e.pointerId];
         if (Object.keys(punteros).length < 2) {
           distanciaPrevia = null;
           centroPrevio = null;
-          // Si queda un dedo, que ese retome el arrastre suavemente.
           const restantes = Object.keys(punteros);
           if (restantes.length === 1) {
             const p = punteros[restantes[0]];
