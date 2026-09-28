@@ -488,6 +488,7 @@
       background: #0d0a04; border: 1px solid #6b5528; border-radius: 8px;
       color: #f4e4c1; font-family: inherit; margin-bottom: 10px;
     }
+    textarea.admin-input { resize: vertical; line-height: 1.5; }
     .admin-btn-mini {
       width: 100%; padding: 12px; font-size: 0.9rem;
       background: #3a5a40; color: #fff; border: 1px solid #6b8e6f;
@@ -706,6 +707,39 @@
             <p class="admin-nota" style="margin-top:10px;margin-bottom:0;">Estos ajustes no aparecen en el historial de la Capitana.</p>
           </div>
 
+          <!-- Editar territorios -->
+          <div class="admin-seccion">
+            <div class="admin-seccion-tit">Editar territorios</div>
+            <label class="admin-etiqueta">Elige un territorio</label>
+            <select id="admin-terr-select" class="admin-input" onchange="adminCargarTerritorio()">
+              <option value="">— Selecciona —</option>
+            </select>
+            <div id="admin-terr-form" style="display:none;">
+              <label class="admin-etiqueta">Nombre en el mapa (visible para Karen)</label>
+              <input type="text" id="terr-clave" class="admin-input">
+              <div class="admin-nota" style="margin:-4px 0 10px;">⚠️ Este nombre está en el mapa físico de Karen. Cámbialo solo si es necesario.</div>
+
+              <label class="admin-etiqueta">Nombre real</label>
+              <input type="text" id="terr-real" class="admin-input">
+
+              <label class="admin-etiqueta">Subtítulo</label>
+              <input type="text" id="terr-sub" class="admin-input">
+
+              <label class="admin-etiqueta">Descripción (lo que Karen lee al descubrir)</label>
+              <textarea id="terr-desc" class="admin-input" rows="4"></textarea>
+
+              <label class="admin-etiqueta">Curiosidades (una por renglón)</label>
+              <textarea id="terr-curio" class="admin-input" rows="5" placeholder="Escribe una curiosidad por línea…"></textarea>
+
+              <label class="admin-etiqueta">Recompensa en Berries</label>
+              <input type="number" id="terr-rec" class="admin-input" min="0">
+              <div class="admin-nota" id="terr-sugerencia" style="margin:-4px 0 10px;"></div>
+
+              <button class="admin-btn-mini" onclick="adminGuardarTerritorio()">Guardar territorio</button>
+              <div id="terr-msg" class="admin-msg"></div>
+            </div>
+          </div>
+          
           <!-- Reabrir recompensas -->
           <div class="admin-seccion">
             <div class="admin-seccion-tit">Recompensas canjeadas</div>
@@ -1412,6 +1446,8 @@
     function mostrarPanelAdmin() {
       document.getElementById('admin-login').style.display = 'none';
       document.getElementById('admin-panel').style.display = 'block';
+      // Cargar la lista de territorios en el selector del editor.
+      adminCargarListaTerritorios();
     }
 
     // --- Cerrar sesión ---
@@ -1562,6 +1598,92 @@
         })
         .catch(function() { alert('Sin señal.'); });
     }    
+
+    // ==========================================================
+    //  EDITOR DE TERRITORIOS (panel)
+    // ==========================================================
+
+    // Llenar el selector de territorios al entrar al panel.
+    function adminCargarListaTerritorios() {
+      fetch(URL_CEREBRO + '?accion=admin_listar_territorios&token=' + encodeURIComponent(adminToken))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (!d.ok) { manejarSesionExpirada(d); return; }
+          const sel = document.getElementById('admin-terr-select');
+          let html = '<option value="">— Selecciona —</option>';
+          d.territorios.forEach(function(t) {
+            html += '<option value="' + t.id + '">' + t.orden + '. ' + t.nombre_clave +
+                    (t.pendiente ? ' (pendiente)' : '') + '</option>';
+          });
+          sel.innerHTML = html;
+        })
+        .catch(function() {});
+    }
+
+    // Cargar los datos del territorio elegido en el formulario.
+    function adminCargarTerritorio() {
+      const id = document.getElementById('admin-terr-select').value;
+      const form = document.getElementById('admin-terr-form');
+      if (!id) { form.style.display = 'none'; return; }
+
+      fetch(URL_CEREBRO + '?accion=admin_leer_territorio&token=' + encodeURIComponent(adminToken) +
+            '&id=' + encodeURIComponent(id))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (!d.ok) { manejarSesionExpirada(d); return; }
+          const t = d.territorio;
+          // Si la descripción es el marcador PENDIENTE, mostrar vacío.
+          const desc = (String(t.descripcion).indexOf('PENDIENTE') !== -1) ? '' : t.descripcion;
+
+          document.getElementById('terr-clave').value = t.nombre_clave || '';
+          document.getElementById('terr-real').value = t.nombre_real || '';
+          document.getElementById('terr-sub').value = t.subtitulo || '';
+          document.getElementById('terr-desc').value = desc;
+          document.getElementById('terr-curio').value = t.curiosidades || '';
+          document.getElementById('terr-rec').value = t.recompensa || 0;
+          document.getElementById('terr-sugerencia').textContent =
+            '💡 Sugerencia del sistema: ' + d.sugerencia_berries + ' Berries (equilibrio económico)';
+          document.getElementById('terr-msg').textContent = '';
+          form.style.display = 'block';
+          form.setAttribute('data-id', id);
+        })
+        .catch(function() {});
+    }
+
+    // Guardar los cambios del territorio.
+    function adminGuardarTerritorio() {
+      const form = document.getElementById('admin-terr-form');
+      const id = form.getAttribute('data-id');
+      if (!id) return;
+
+      const datos = {
+        id: id,
+        nombre_clave: document.getElementById('terr-clave').value,
+        nombre_real: document.getElementById('terr-real').value,
+        subtitulo: document.getElementById('terr-sub').value,
+        descripcion: document.getElementById('terr-desc').value,
+        curiosidades: document.getElementById('terr-curio').value,
+        recompensa: document.getElementById('terr-rec').value
+      };
+
+      const msg = document.getElementById('terr-msg');
+      msg.textContent = 'Guardando…';
+
+      fetch(URL_CEREBRO + '?accion=admin_guardar_territorio&token=' + encodeURIComponent(adminToken) +
+            '&datos=' + encodeURIComponent(JSON.stringify(datos)))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.ok) {
+            msg.textContent = '✔ ' + d.mensaje;
+            adminCargarListaTerritorios(); // refresca marcas de pendiente
+            cargarEstado();                // refresca la app de Karen
+          } else {
+            msg.textContent = d.error || 'No se pudo guardar.';
+            manejarSesionExpirada(d);
+          }
+        })
+        .catch(function() { msg.textContent = 'Sin señal.'; });
+    }
     
     // ==========================================================
     //  CARGA INICIAL Y ACTIVACIÓN DEL ACCESO SECRETO
