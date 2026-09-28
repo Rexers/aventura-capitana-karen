@@ -531,6 +531,16 @@
     }
     .admin-peligro { border-color: #7a2a22; }
     .admin-btn-rojo { background: #7a2a22; border-color: #c0392b; }
+        .admin-economia {
+      font-size: 0.8rem; padding: 10px 12px; border-radius: 8px;
+      margin-bottom: 12px; line-height: 1.5;
+    }
+    .admin-economia.ok { background: rgba(58,90,64,0.3); border: 1px solid #3a5a40; color: #a8d0ae; }
+    .admin-economia.mal { background: rgba(122,42,34,0.3); border: 1px solid #7a2a22; color: #e0a0a0; }
+    .admin-rew-edit { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(107,85,40,0.3); font-size: 0.85rem; }
+    .admin-rew-edit:last-child { border-bottom: none; }
+    .admin-rew-edit-btn { background: #4a3c1e; color: #f4e4c1; border: 1px solid #6b5528; border-radius: 6px; padding: 6px 10px; font-size: 0.75rem; font-family: inherit; cursor: pointer; white-space: nowrap; }
+    .admin-rew-inactiva { opacity: 0.5; }
         .admin-rew-item {
       display: flex; justify-content: space-between; align-items: center;
       gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(107,85,40,0.3);
@@ -773,6 +783,42 @@
               <button class="admin-btn-mini" onclick="adminGuardarTerritorio()">Guardar territorio</button>
               <div id="terr-msg" class="admin-msg"></div>
             </div>
+          </div>
+
+          <!-- Editar recompensas -->
+          <div class="admin-seccion">
+            <div class="admin-seccion-tit">Editar recompensas</div>
+
+            <!-- Semáforo de economía -->
+            <div id="admin-economia" class="admin-economia">—</div>
+
+            <!-- Lista de recompensas -->
+            <div id="admin-rew-lista">—</div>
+            <button class="admin-btn-mini" onclick="adminCargarRecompensasFull()" style="margin-top:8px;">Ver / recargar recompensas</button>
+
+            <!-- Formulario (crear/editar) -->
+            <div id="admin-rew-form" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid rgba(107,85,40,0.4);">
+              <div class="admin-seccion-tit" id="admin-rew-form-tit">Nueva recompensa</div>
+              <label class="admin-etiqueta">Nombre</label>
+              <input type="text" id="rew-nombre" class="admin-input">
+              <label class="admin-etiqueta">Descripción</label>
+              <textarea id="rew-desc" class="admin-input" rows="2"></textarea>
+              <label class="admin-etiqueta">Costo en Berries</label>
+              <input type="number" id="rew-costo" class="admin-input" min="0">
+              <label class="admin-etiqueta">Tipo</label>
+              <select id="rew-cat" class="admin-input">
+                <option value="base">Base</option>
+                <option value="especial">Especial</option>
+              </select>
+              <label class="admin-etiqueta">
+                <input type="checkbox" id="rew-activo" checked> Visible para la Capitana
+              </label>
+              <button class="admin-btn-mini" onclick="adminGuardarRecompensa()" style="margin-top:10px;">Guardar</button>
+              <button class="admin-btn-mini" onclick="adminCancelarRewForm()" style="background:transparent;border-color:#6b5528;color:#cbb489;margin-top:6px;">Cancelar</button>
+              <div id="rew-msg" class="admin-msg"></div>
+            </div>
+
+            <button class="admin-btn-mini" onclick="adminNuevaRecompensa()" style="margin-top:10px;background:#3a5a40;">+ Crear recompensa nueva</button>
           </div>
           
           <!-- Reabrir recompensas -->
@@ -1774,6 +1820,122 @@
             msg.textContent = '✔ ' + d.mensaje;
             adminCargarListaTerritorios(); // refresca marcas de pendiente
             cargarEstado();                // refresca la app de Karen
+          } else {
+            msg.textContent = d.error || 'No se pudo guardar.';
+            manejarSesionExpirada(d);
+          }
+        })
+        .catch(function() { msg.textContent = 'Sin señal.'; });
+    }
+
+    // ==========================================================
+    //  EDITOR DE RECOMPENSAS (panel)
+    // ==========================================================
+    let REW_EDITANDO = null; // id de la recompensa que se edita (null = nueva)
+
+    function adminCargarRecompensasFull() {
+      const cont = document.getElementById('admin-rew-lista');
+      cont.textContent = 'Consultando…';
+      fetch(URL_CEREBRO + '?accion=admin_recompensas_full&token=' + encodeURIComponent(adminToken))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (!d.ok) { cont.textContent = d.error || 'Error.'; manejarSesionExpirada(d); return; }
+
+          // Semáforo de economía.
+          const eco = d.economia;
+          const ecoEl = document.getElementById('admin-economia');
+          ecoEl.className = 'admin-economia ' + (eco.balanceada ? 'ok' : 'mal');
+          ecoEl.innerHTML =
+            (eco.balanceada ? '✅ Economía balanceada' : '⚠️ Economía sin balancear') + '<br>' +
+            'Garantizados: ' + eco.berries_garantizados + ' 🪙 · Recompensas base: ' + eco.costo_recompensas_base + ' 🪙<br>' +
+            'Margen: ' + (eco.diferencia >= 0 ? '+' : '') + eco.diferencia + ' 🪙';
+
+          // Lista de recompensas.
+          let html = '';
+          d.recompensas.forEach(function(r) {
+            html +=
+              '<div class="admin-rew-edit' + (r.activo ? '' : ' admin-rew-inactiva') + '">' +
+                '<div>' +
+                  '<div class="admin-rew-nombre">' + r.nombre + (r.activo ? '' : ' (oculta)') + '</div>' +
+                  '<div class="admin-rew-estado">' + r.costo + ' 🪙 · ' + r.categoria + '</div>' +
+                '</div>' +
+                '<button class="admin-rew-edit-btn" onclick="adminEditarRew(\'' + r.id + '\')">Editar</button>' +
+              '</div>';
+          });
+          cont.innerHTML = html;
+        })
+        .catch(function() { cont.textContent = 'Sin señal.'; });
+    }
+
+    // Preparar formulario para NUEVA recompensa.
+    function adminNuevaRecompensa() {
+      REW_EDITANDO = null;
+      document.getElementById('admin-rew-form-tit').textContent = 'Nueva recompensa';
+      document.getElementById('rew-nombre').value = '';
+      document.getElementById('rew-desc').value = '';
+      document.getElementById('rew-costo').value = '';
+      document.getElementById('rew-cat').value = 'especial';
+      document.getElementById('rew-activo').checked = true;
+      document.getElementById('rew-msg').textContent = '';
+      document.getElementById('admin-rew-form').style.display = 'block';
+    }
+
+    // Preparar formulario para EDITAR una recompensa existente.
+    function adminEditarRew(id) {
+      // Buscar los datos actuales en la lista ya cargada.
+      fetch(URL_CEREBRO + '?accion=admin_recompensas_full&token=' + encodeURIComponent(adminToken))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (!d.ok) { manejarSesionExpirada(d); return; }
+          const r = d.recompensas.find(function(x) { return x.id === id; });
+          if (!r) return;
+          REW_EDITANDO = id;
+          document.getElementById('admin-rew-form-tit').textContent = 'Editar: ' + r.nombre;
+          document.getElementById('rew-nombre').value = r.nombre;
+          document.getElementById('rew-desc').value = r.descripcion;
+          document.getElementById('rew-costo').value = r.costo;
+          document.getElementById('rew-cat').value = r.categoria;
+          document.getElementById('rew-activo').checked = r.activo;
+          document.getElementById('rew-msg').textContent = '';
+          document.getElementById('admin-rew-form').style.display = 'block';
+        });
+    }
+
+    function adminCancelarRewForm() {
+      document.getElementById('admin-rew-form').style.display = 'none';
+      REW_EDITANDO = null;
+    }
+
+    // Guardar (crear o editar según REW_EDITANDO).
+    function adminGuardarRecompensa() {
+      const datos = {
+        nombre: document.getElementById('rew-nombre').value,
+        descripcion: document.getElementById('rew-desc').value,
+        costo: document.getElementById('rew-costo').value,
+        categoria: document.getElementById('rew-cat').value,
+        activo: document.getElementById('rew-activo').checked
+      };
+      const msg = document.getElementById('rew-msg');
+      if (!datos.nombre) { msg.textContent = 'Ponle un nombre.'; return; }
+      msg.textContent = 'Guardando…';
+
+      let accion, cuerpo;
+      if (REW_EDITANDO) {
+        datos.id = REW_EDITANDO;
+        accion = 'admin_editar_recompensa';
+      } else {
+        accion = 'admin_crear_recompensa';
+      }
+
+      fetch(URL_CEREBRO + '?accion=' + accion + '&token=' + encodeURIComponent(adminToken) +
+            '&datos=' + encodeURIComponent(JSON.stringify(datos)))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.ok) {
+            msg.textContent = '✔ ' + d.mensaje;
+            adminCargarRecompensasFull();     // refresca lista + economía
+            cargarEstado();                    // refresca el Tesoro de Karen
+            setTimeout(adminCancelarRewForm, 800);
           } else {
             msg.textContent = d.error || 'No se pudo guardar.';
             manejarSesionExpirada(d);
