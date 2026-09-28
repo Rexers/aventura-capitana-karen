@@ -225,6 +225,41 @@
       background: none; border: none; color: #cbb489;
       font-size: 1.4rem; float: right; cursor: pointer; margin: -8px -6px 0 0;
     }
+        /* Bloque desplegable de curiosidades ("Datos del territorio") */
+    .curio-hook {
+      background: rgba(212,160,23,0.12);
+      border: 1px solid #8a6d3b;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin: 16px 0 6px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px;
+      transition: background 0.2s;
+    }
+    .curio-hook:active { background: rgba(212,160,23,0.2); }
+    .curio-hook .curio-hook-txt { text-align: left; }
+    .curio-hook .curio-hook-tit { color: #e8c24a; font-size: 0.95rem; font-weight: bold; }
+    .curio-hook .curio-hook-sub { color: #cbb489; font-size: 0.75rem; font-style: italic; margin-top: 2px; }
+    .curio-hook .curio-flecha { color: #e8c24a; font-size: 1.2rem; transition: transform 0.3s; }
+    .curio-hook.abierto .curio-flecha { transform: rotate(180deg); }
+
+    .curio-contenido {
+      max-height: 0; overflow: hidden;
+      transition: max-height 0.4s ease;
+    }
+    .curio-contenido.abierto { max-height: 800px; }
+    .curio-item {
+      background: rgba(0,0,0,0.2);
+      border-left: 3px solid #d4a017;
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin: 8px 0;
+      font-size: 0.88rem;
+      line-height: 1.5;
+      text-align: left;
+      color: #f4e4c1;
+    }
     
     /* ==========================================================
        ARCHIVO DE LA EXPEDICIÓN (el libro que se llena)
@@ -1240,7 +1275,7 @@
           '<button class="modal-btn secundario" onclick="cerrarModal()">Todavía no</button>'
         );
       } else if (info.estado === 'descubierto') {
-        // Territorio ya conquistado: mostrar su información.
+        // Territorio ya conquistado: mostrar su información + curiosidades.
         mostrarModal(
           '<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
           '<h3>' + info.nombre_clave + '</h3>' +
@@ -1248,9 +1283,43 @@
           (info.descripcion && info.descripcion.indexOf('PENDIENTE') === -1
               ? '<p>' + info.descripcion + '</p>'
               : '<p><em>Registro en preparación…</em></p>') +
+          construirCuriosidades_(info.curiosidades) +
           '<button class="modal-btn secundario" onclick="cerrarModal()">Cerrar</button>'
         );
       }
+    }
+
+    // Construye el bloque desplegable de curiosidades ("Datos del territorio").
+    // Recibe el texto de curiosidades (una por renglón). Si no hay, no muestra nada.
+    function construirCuriosidades_(texto) {
+      if (!texto || !String(texto).trim()) return '';
+
+      // Separar por renglones y limpiar vacíos.
+      const items = String(texto).split('\n')
+        .map(function(s) { return s.trim(); })
+        .filter(function(s) { return s.length > 0; });
+
+      if (items.length === 0) return '';
+
+      let itemsHtml = items.map(function(c) {
+        return '<div class="curio-item">' + c + '</div>';
+      }).join('');
+
+      return '<div class="curio-hook" onclick="toggleCuriosidades(this)">' +
+               '<div class="curio-hook-txt">' +
+                 '<div class="curio-hook-tit">🧭 Datos del territorio</div>' +
+                 '<div class="curio-hook-sub">Algunos secretos que guarda este lugar…</div>' +
+               '</div>' +
+               '<div class="curio-flecha">&#9662;</div>' +
+             '</div>' +
+             '<div class="curio-contenido">' + itemsHtml + '</div>';
+    }
+
+    // Abre/cierra el desplegable de curiosidades.
+    function toggleCuriosidades(hook) {
+      hook.classList.toggle('abierto');
+      const contenido = hook.nextElementSibling;
+      if (contenido) contenido.classList.toggle('abierto');
     }
 
     // Llama al cerebro para descubrir, y muestra la celebración.
