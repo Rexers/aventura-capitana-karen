@@ -829,8 +829,12 @@
             <button class="admin-btn-mini" onclick="adminCargarRecompensas()" style="margin-top:8px;">Ver recompensas</button>
           </div>
           
-          <!-- Resetear progreso -->
+          <!-- Correcciones y zona de peligro -->
           <div class="admin-seccion admin-peligro">
+            <div class="admin-seccion-tit">Correcciones</div>
+            <p class="admin-nota" style="margin-bottom:10px;">Revierte el último territorio descubierto (por si se marcó sin querer). Devuelve sus Berries.</p>
+            <button class="admin-btn-mini" onclick="adminDeshacerDescubrimiento()" style="margin-bottom:16px;">↩️ Deshacer último descubrimiento</button>
+
             <div class="admin-seccion-tit">Zona de peligro</div>
             <p class="admin-nota" style="margin-bottom:10px;">Resetea territorios, misiones, Berries y recompensas. Conserva la bitácora.</p>
             <button class="admin-btn-mini admin-btn-rojo" onclick="adminPedirReset()">🔄 Resetear progreso</button>
@@ -1667,6 +1671,26 @@
         .catch(function() { alert('Sin señal.'); });
     }
 
+    // --- Deshacer el último descubrimiento (con confirmación) ---
+    function adminDeshacerDescubrimiento() {
+      const seguro = confirm('¿Deshacer el último territorio descubierto?\n\nVolverá a estar disponible, su misión se bloqueará de nuevo y se le quitarán a la Capitana los Berries que dio.');
+      if (!seguro) return;
+
+      fetch(URL_CEREBRO + '?accion=admin_deshacer_descubrimiento&token=' + encodeURIComponent(adminToken))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.ok) {
+            alert('✔ ' + d.mensaje + '\n\nBerries revertidos: ' + d.berries_revertidos + '\nSaldo actual: ' + d.saldo_actual);
+            adminVerDiagnostico();
+            cargarEstado(); // refresca mapa, inicio, todo
+          } else {
+            alert(d.error || 'No se pudo deshacer.');
+            manejarSesionExpirada(d);
+          }
+        })
+        .catch(function() { alert('Sin señal.'); });
+    }
+    
     // --- Resetear progreso (con doble confirmación) ---
     function adminPedirReset() {
       const seguro = confirm('¿Seguro que quieres RESETEAR el progreso?\n\nEsto borra territorios, misiones, Berries y canjes. La bitácora se conserva.\n\nEsta acción no se puede deshacer.');
