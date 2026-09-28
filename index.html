@@ -1366,13 +1366,16 @@
         ? '<div class="cel-real"><small>También conocido como</small>' + t.nombre_real + '</div>'
         : '';
 
+      // Recordar cuál territorio se acaba de descubrir (para abrir su registro).
+      TERRITORIO_RECIEN_DESCUBIERTO = t.id;
+
       mostrarModal(
         '<div class="cel-titulo">¡Territorio descubierto!</div>' +
         '<div class="cel-nombre">' + t.nombre_clave + '</div>' +
         realHtml +
         '<div class="cel-berries" id="cel-contador">+0 Berries</div>' +
         '<div class="cel-frase">Nuevas tierras, mismos sueños…</div>' +
-        '<button class="modal-btn cel-boton" onclick="cerrarCelebracion()">¡Continuar la aventura!</button>'
+        '<button class="modal-btn cel-boton" onclick="verRegistroDescubierto()">Ver el registro del lugar</button>'
       );
 
       // Lluvia de destellos.
@@ -1421,6 +1424,31 @@
       setTimeout(function() { cont.innerHTML = ''; }, 6500);
     }
 
+    // Guarda cuál territorio se acaba de descubrir.
+    let TERRITORIO_RECIEN_DESCUBIERTO = null;
+
+    // Al pulsar "Ver el registro": refresca los datos y abre la ventana
+    // del territorio recién descubierto (con descripción + curiosidades).
+    function verRegistroDescubierto() {
+      var destellos = document.getElementById('cel-destellos');
+      if (destellos) destellos.innerHTML = '';
+
+      const id = TERRITORIO_RECIEN_DESCUBIERTO;
+      // Refrescar el estado del juego; cuando llegue, abrir el registro.
+      fetch(URL_CEREBRO + '?accion=estado')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.ok) pintarEstado(d.estado);
+          // Abrir la ventana del territorio ya con sus datos frescos.
+          if (id && ESTADOS_TERRITORIO[id]) {
+            abrirTerritorio(id);
+          } else {
+            cerrarModal();
+          }
+        })
+        .catch(function() { cerrarModal(); });
+    }
+    
     // Cierra la celebración y refresca todo (mapa + inicio).
     function cerrarCelebracion() {
       var destellos = document.getElementById('cel-destellos');
