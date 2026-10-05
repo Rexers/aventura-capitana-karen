@@ -5,339 +5,82 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>La Aventura de la Capitana Karen</title>
   <style>
-    /* ==========================================================
-       ESTILO TEMPORAL — el diseño pirata real llega después.
-       Ahora solo probamos que la navegación funcione.
-       ========================================================== */
     * { box-sizing: border-box; }
-    :root {
-      /* Respeta las zonas seguras del iPhone (notch / barra inferior) */
-      padding-top: env(safe-area-inset-top, 0px);
-    }
+    :root { padding-top: env(safe-area-inset-top, 0px); }
     html, body { height: 100%; margin: 0; }
     body {
       font-family: Georgia, 'Times New Roman', serif;
-      background: #1c2b3a;
-      color: #f4e4c1;
+      background: #1c2b3a; color: #f4e4c1;
       -webkit-text-size-adjust: 100%;
-      display: flex;
-      flex-direction: column;
+      display: flex; flex-direction: column;
     }
-
-    /* Zona donde se muestran las pantallas */
-    #contenido {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px 18px 100px; /* espacio inferior para no tapar con la barra */
-    }
-
-    /* Cada "pantalla" se oculta salvo la activa */
+    #contenido { flex: 1; overflow-y: auto; padding: 20px 18px 100px; }
     .pantalla { display: none; max-width: 520px; margin: 0 auto; }
     .pantalla.activa { display: block; }
-
     h1 { font-size: 1.4rem; line-height: 1.3; margin: 0 0 4px; text-align: center; }
     h2 { font-size: 1.2rem; margin: 0 0 12px; }
     .sub { opacity: 0.8; font-size: 0.9rem; margin-bottom: 20px; text-align: center; }
-
-    /* --- Tarjeta de Inicio --- */
-    .tarjeta {
-      background: rgba(0,0,0,0.25);
-      border: 1px solid #8a6d3b;
-      border-radius: 12px;
-      padding: 20px;
-      text-align: center;
-      margin-bottom: 16px;
-    }
+    .tarjeta { background: rgba(0,0,0,0.25); border: 1px solid #8a6d3b; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 16px; }
     .dato { font-size: 1.05rem; margin: 8px 0; }
     .berries { font-size: 1.5rem; font-weight: bold; color: #e8c24a; }
     .barra-prog { background: rgba(255,255,255,0.1); border-radius: 20px; height: 16px; overflow: hidden; margin: 8px 0; }
     .barra-prog > div { background: #c0392b; height: 100%; width: 0%; transition: width 0.6s; }
     .cargando { opacity: 0.6; font-style: italic; }
-
-    /* --- Tarjetas "puente de mando" del Inicio --- */
     .accesos { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 8px; }
-    .acceso {
-      background: rgba(0,0,0,0.2);
-      border: 1px solid #6b5528;
-      border-radius: 10px;
-      padding: 14px 8px;
-      text-align: center;
-      cursor: pointer;
-      font-size: 0.85rem;
-    }
+    .acceso { background: rgba(0,0,0,0.2); border: 1px solid #6b5528; border-radius: 10px; padding: 14px 8px; text-align: center; cursor: pointer; font-size: 0.85rem; }
     .acceso .ic { font-size: 1.4rem; display: block; margin-bottom: 4px; }
-
-    /* --- Placeholder de secciones aún no construidas --- */
-    .placeholder {
-      text-align: center;
-      opacity: 0.7;
-      padding: 40px 10px;
-      font-style: italic;
-    }
-
-    /* ==========================================================
-       MAPA INTERACTIVO (zoom estilo videojuego) — v2
-       ========================================================== */
-    /* El mapa ocupa toda la ventana disponible (sin cuadro),
-       y como #contenido tiene padding, lo anulamos solo aquí. */
-    #p-mapa.activa {
-      display: flex;
-      flex-direction: column;
-      position: fixed;
-      top: env(safe-area-inset-top, 0px);
-      left: 0; right: 0;
-      bottom: 64px;                 /* deja libre la barra de navegación */
-      margin: 0;
-      max-width: none;
-      z-index: 1;
-    }
-    #mapa-visor {
-      flex: 1;
-      overflow: hidden;
-      position: relative;
-      background: #0d1620;
-      touch-action: none;
-    }
-    #mapa-lienzo {
-      position: absolute;
-      top: 0; left: 0;
-      transform-origin: 0 0;
-      will-change: transform;
-    }
-    #mapa-img {
-      display: block;
-      max-width: none;
-      user-select: none;
-      -webkit-user-drag: none;
-    }
-    /* Letrero de ayuda flotante (aparece y se desvanece) */
-    #mapa-ayuda {
-      position: absolute;
-      top: 12px; left: 50%;
-      transform: translateX(-50%);
-      background: rgba(13,22,32,0.85);
-      color: #f4e4c1;
-      font-size: 0.75rem;
-      font-style: italic;
-      padding: 7px 14px;
-      border-radius: 20px;
-      border: 1px solid #3a2f1a;
-      pointer-events: none;         /* no estorba los gestos */
-      opacity: 0;
-      transition: opacity 0.6s;
-      z-index: 5;
-    }
+    .placeholder { text-align: center; opacity: 0.7; padding: 40px 10px; font-style: italic; }
+    #p-mapa.activa { display: flex; flex-direction: column; position: fixed; top: env(safe-area-inset-top, 0px); left: 0; right: 0; bottom: 64px; margin: 0; max-width: none; z-index: 1; }
+    #mapa-visor { flex: 1; overflow: hidden; position: relative; background: #0d1620; touch-action: none; }
+    #mapa-lienzo { position: absolute; top: 0; left: 0; transform-origin: 0 0; will-change: transform; }
+    #mapa-img { display: block; max-width: none; user-select: none; -webkit-user-drag: none; }
+    #mapa-ayuda { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); background: rgba(13,22,32,0.85); color: #f4e4c1; font-size: 0.75rem; font-style: italic; padding: 7px 14px; border-radius: 20px; border: 1px solid #3a2f1a; pointer-events: none; opacity: 0; transition: opacity 0.6s; z-index: 5; }
     #mapa-ayuda.visible { opacity: 1; }
-    .marcador {
-      position: absolute;
-      width: 26px; height: 26px;
-      margin-left: -13px; margin-top: -13px;
-      border-radius: 50%;
-      border: 2px solid #f4e4c1;
-      background: #c0392b;
-      box-shadow: 0 0 0 2px rgba(0,0,0,0.4);
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.7rem; color: #fff;
-      transition: transform 0.15s;
-      user-select: none;
-      -webkit-user-select: none;
-      -webkit-touch-callout: none;
-    }
+    .marcador { position: absolute; width: 26px; height: 26px; margin-left: -13px; margin-top: -13px; border-radius: 50%; border: 2px solid #f4e4c1; background: #c0392b; box-shadow: 0 0 0 2px rgba(0,0,0,0.4); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #fff; transition: transform 0.15s; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
     .marcador:active { transform: scale(1.2); }
-    /* --- Estados de los marcadores --- */
-    .marcador.estado-bloqueado {
-      background: #2a2a2e;          /* fondo oscuro y sólido */
-      border-color: #d8c9a8;        /* borde claro visible */
-      opacity: 1;                   /* totalmente visible */
-      color: #e8dcc0;               /* candado claro */
-      box-shadow: 0 2px 5px rgba(0,0,0,0.6);  /* relieve sobre el mapa */
-    }
-    .marcador.estado-disponible {
-      background: #c0392b;
-      border-color: #fff;
-      width: 30px; height: 30px;    /* un poco más grande: "ven aquí" */
-      margin-left: -15px; margin-top: -15px;
-      font-weight: bold;
-      z-index: 3;                   /* siempre encima de los demás */
-      animation: latido 1.5s ease-in-out infinite;
-    }
-    .marcador.estado-descubierto {
-      background: #d4a017;          /* dorado conquistado */
-      border-color: #fff3cf;
-      color: #2a1e05;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-    }
-    /* Latido notorio para invitar a tocar el territorio disponible */
-    @keyframes latido {
-      0%   { box-shadow: 0 0 0 2px rgba(0,0,0,0.5), 0 0 0 0 rgba(255,80,60,0.85); }
-      70%  { box-shadow: 0 0 0 2px rgba(0,0,0,0.5), 0 0 0 16px rgba(255,80,60,0); }
-      100% { box-shadow: 0 0 0 2px rgba(0,0,0,0.5), 0 0 0 0 rgba(255,80,60,0); }
-    }
-
-    /* ==========================================================
-       VENTANA EMERGENTE (modal) — estilo temporal
-       ========================================================== */
-    #modal-fondo {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
-      z-index: 50;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-    }
+    .marcador.estado-bloqueado { background: #2a2a2e; border-color: #d8c9a8; opacity: 1; color: #e8dcc0; box-shadow: 0 2px 5px rgba(0,0,0,0.6); }
+    .marcador.estado-disponible { background: #c0392b; border-color: #fff; width: 30px; height: 30px; margin-left: -15px; margin-top: -15px; font-weight: bold; z-index: 3; animation: latido 1.5s ease-in-out infinite; }
+    .marcador.estado-descubierto { background: #d4a017; border-color: #fff3cf; color: #2a1e05; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+    @keyframes latido { 0% { box-shadow: 0 0 0 2px rgba(0,0,0,0.5), 0 0 0 0 rgba(255,80,60,0.85); } 70% { box-shadow: 0 0 0 2px rgba(0,0,0,0.5), 0 0 0 16px rgba(255,80,60,0); } 100% { box-shadow: 0 0 0 2px rgba(0,0,0,0.5), 0 0 0 0 rgba(255,80,60,0); } }
+    #modal-fondo { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 50; align-items: center; justify-content: center; padding: 24px; }
     #modal-fondo.abierto { display: flex; }
-    #modal-caja {
-      background: #22160c;
-      border: 2px solid #8a6d3b;
-      border-radius: 14px;
-      max-width: 420px;
-      width: 100%;
-      max-height: 85vh;
-      overflow-y: auto;
-      padding: 24px 22px;
-      text-align: center;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-    }
+    #modal-caja { background: #22160c; border: 2px solid #8a6d3b; border-radius: 14px; max-width: 420px; width: 100%; max-height: 85vh; overflow-y: auto; padding: 24px 22px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
     #modal-caja h3 { font-size: 1.3rem; margin: 0 0 6px; color: #f4e4c1; }
     #modal-caja .real { color: #e8c24a; font-size: 1.05rem; margin: 6px 0 14px; }
     #modal-caja p { font-size: 0.95rem; line-height: 1.5; opacity: 0.9; }
-    #modal-caja .berries-gana {
-      font-size: 1.8rem; font-weight: bold; color: #e8c24a; margin: 14px 0;
-    }
-    .modal-btn {
-      display: block;
-      width: 100%;
-      background: #c0392b;
-      color: #fff;
-      border: 1px solid #f4e4c1;
-      border-radius: 10px;
-      padding: 14px;
-      font-size: 1rem;
-      font-family: inherit;
-      cursor: pointer;
-      margin-top: 10px;
-    }
+    #modal-caja .berries-gana { font-size: 1.8rem; font-weight: bold; color: #e8c24a; margin: 14px 0; }
+    .modal-btn { display: block; width: 100%; background: #c0392b; color: #fff; border: 1px solid #f4e4c1; border-radius: 10px; padding: 14px; font-size: 1rem; font-family: inherit; cursor: pointer; margin-top: 10px; }
     .modal-btn.secundario { background: transparent; color: #cbb489; border-color: #6b5528; }
-    .modal-cerrar {
-      background: none; border: none; color: #cbb489;
-      font-size: 1.4rem; float: right; cursor: pointer; margin: -8px -6px 0 0;
-    }
-        /* Bloque desplegable de curiosidades ("Datos del territorio") */
-    .curio-hook {
-      background: rgba(212,160,23,0.12);
-      border: 1px solid #8a6d3b;
-      border-radius: 10px;
-      padding: 12px 14px;
-      margin: 16px 0 6px;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: space-between;
-      gap: 10px;
-      transition: background 0.2s;
-    }
+    .modal-cerrar { background: none; border: none; color: #cbb489; font-size: 1.4rem; float: right; cursor: pointer; margin: -8px -6px 0 0; }
+    .curio-hook { background: rgba(212,160,23,0.12); border: 1px solid #8a6d3b; border-radius: 10px; padding: 12px 14px; margin: 16px 0 6px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 10px; transition: background 0.2s; }
     .curio-hook:active { background: rgba(212,160,23,0.2); }
     .curio-hook .curio-hook-txt { text-align: left; }
     .curio-hook .curio-hook-tit { color: #e8c24a; font-size: 0.95rem; font-weight: bold; }
     .curio-hook .curio-hook-sub { color: #cbb489; font-size: 0.75rem; font-style: italic; margin-top: 2px; }
     .curio-hook .curio-flecha { color: #e8c24a; font-size: 1.2rem; transition: transform 0.3s; }
     .curio-hook.abierto .curio-flecha { transform: rotate(180deg); }
-
-    .curio-contenido {
-      max-height: 0; overflow: hidden;
-      transition: max-height 0.4s ease;
-    }
+    .curio-contenido { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
     .curio-contenido.abierto { max-height: 800px; }
-    .curio-item {
-      background: rgba(0,0,0,0.2);
-      border-left: 3px solid #d4a017;
-      border-radius: 6px;
-      padding: 10px 12px;
-      margin: 8px 0;
-      font-size: 0.88rem;
-      line-height: 1.5;
-      text-align: left;
-      color: #f4e4c1;
-    }
-    
-    /* ==========================================================
-       ARCHIVO DE LA EXPEDICIÓN (el libro que se llena)
-       ========================================================== */
-    .archivo-progreso {
-      text-align: center;
-      font-size: 0.9rem;
-      color: #cbb489;
-      letter-spacing: 1px;
-      margin-bottom: 18px;
-      padding-bottom: 14px;
-      border-bottom: 1px solid rgba(138,109,59,0.4);
-    }
+    .curio-item { background: rgba(0,0,0,0.2); border-left: 3px solid #d4a017; border-radius: 6px; padding: 10px 12px; margin: 8px 0; font-size: 0.88rem; line-height: 1.5; text-align: left; color: #f4e4c1; }
+    .archivo-progreso { text-align: center; font-size: 0.9rem; color: #cbb489; letter-spacing: 1px; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid rgba(138,109,59,0.4); }
     .archivo-progreso strong { color: #e8c24a; font-size: 1.1rem; }
-
-    /* Página escrita (territorio descubierto) */
-    .pagina {
-      background: linear-gradient(135deg, #2a1d0e, #22160c);
-      border: 1px solid #8a6d3b;
-      border-left: 4px solid #d4a017;
-      border-radius: 8px;
-      padding: 16px 18px;
-      margin-bottom: 14px;
-      cursor: pointer;
-      transition: transform 0.15s, box-shadow 0.15s;
-    }
+    .pagina { background: linear-gradient(135deg, #2a1d0e, #22160c); border: 1px solid #8a6d3b; border-left: 4px solid #d4a017; border-radius: 8px; padding: 16px 18px; margin-bottom: 14px; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; }
     .pagina:active { transform: scale(0.98); }
     .pagina .pag-clave { font-size: 1.2rem; color: #f4e4c1; margin-bottom: 2px; }
     .pagina .pag-real { font-size: 0.9rem; color: #e8c24a; font-style: italic; }
-    .pagina .pag-fecha {
-      font-size: 0.75rem; color: #cbb489; margin-top: 8px;
-      letter-spacing: 1px; text-transform: uppercase;
-    }
+    .pagina .pag-fecha { font-size: 0.75rem; color: #cbb489; margin-top: 8px; letter-spacing: 1px; text-transform: uppercase; }
     .pagina .pag-ver { font-size: 0.8rem; color: #cbb489; margin-top: 6px; opacity: 0.8; }
-
-    /* Página en blanco (territorio por descubrir) */
-    .pagina-blanco {
-      background: rgba(0,0,0,0.15);
-      border: 1px dashed #5a4a2a;
-      border-radius: 8px;
-      padding: 18px;
-      margin-bottom: 14px;
-      text-align: center;
-      color: #6b5a3a;
-      font-style: italic;
-      font-size: 0.9rem;
-    }
+    .pagina-blanco { background: rgba(0,0,0,0.15); border: 1px dashed #5a4a2a; border-radius: 8px; padding: 18px; margin-bottom: 14px; text-align: center; color: #6b5a3a; font-style: italic; font-size: 0.9rem; }
     .pagina-blanco .sello { font-size: 1.4rem; opacity: 0.5; display: block; margin-bottom: 4px; }
-
-    /* ==========================================================
-       MISIONES
-       ========================================================== */
-    .mis-grupo-tit {
-      font-size: 0.85rem; letter-spacing: 1.5px; text-transform: uppercase;
-      color: #cbb489; margin: 22px 0 12px; padding-bottom: 6px;
-      border-bottom: 1px solid rgba(138,109,59,0.4);
-    }
+    .mis-grupo-tit { font-size: 0.85rem; letter-spacing: 1.5px; text-transform: uppercase; color: #cbb489; margin: 22px 0 12px; padding-bottom: 6px; border-bottom: 1px solid rgba(138,109,59,0.4); }
     .mis-grupo-tit:first-child { margin-top: 0; }
-
-    .mision {
-      background: rgba(0,0,0,0.22);
-      border: 1px solid #6b5528;
-      border-left: 4px solid #6b5528;
-      border-radius: 8px;
-      padding: 14px 16px;
-      margin-bottom: 12px;
-    }
+    .mision { background: rgba(0,0,0,0.22); border: 1px solid #6b5528; border-left: 4px solid #6b5528; border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; }
     .mision .mis-cab { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
     .mision .mis-titulo { font-size: 1.05rem; color: #f4e4c1; }
     .mision .mis-desc { font-size: 0.88rem; opacity: 0.85; margin-top: 6px; line-height: 1.45; }
     .mision .mis-pie { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
     .mis-recompensa { font-size: 0.85rem; color: #e8c24a; font-weight: bold; }
-    .mis-estado {
-      font-size: 0.7rem; letter-spacing: 1px; text-transform: uppercase;
-      padding: 3px 8px; border-radius: 10px; white-space: nowrap;
-    }
-
-    /* Colores por estado */
+    .mis-estado { font-size: 0.7rem; letter-spacing: 1px; text-transform: uppercase; padding: 3px 8px; border-radius: 10px; white-space: nowrap; }
     .mision.estado-completada { border-left-color: #d4a017; }
     .mision.estado-completada .mis-estado { background: rgba(212,160,23,0.2); color: #e8c24a; }
     .mision.estado-disponible { border-left-color: #c0392b; }
@@ -348,254 +91,76 @@
     .mision.estado-bloqueada .mis-estado { background: rgba(255,255,255,0.08); color: #cbb489; }
     .mis-sellada { font-style: italic; opacity: 0.7; }
     .mis-evidencia { font-size: 0.72rem; color: #8fae8f; margin-top: 8px; font-style: italic; }
-
-    /* ==========================================================
-       INVENTARIO (cuadrícula tipo videojuego)
-       ========================================================== */
-    .inv-cat-tit {
-      font-size: 0.85rem; letter-spacing: 1.5px; text-transform: uppercase;
-      color: #cbb489; margin: 18px 0 12px;
-    }
-    .inv-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-bottom: 8px;
-    }
-    .inv-slot {
-      background: linear-gradient(145deg, #2a1d0e, #1c1308);
-      border: 1px solid #6b5528;
-      border-radius: 10px;
-      padding: 14px 8px;
-      text-align: center;
-      cursor: pointer;
-      aspect-ratio: 1 / 1;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      transition: transform 0.12s, border-color 0.2s;
-    }
+    .inv-cat-tit { font-size: 0.85rem; letter-spacing: 1.5px; text-transform: uppercase; color: #cbb489; margin: 18px 0 12px; }
+    .inv-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 8px; }
+    .inv-slot { background: linear-gradient(145deg, #2a1d0e, #1c1308); border: 1px solid #6b5528; border-radius: 10px; padding: 14px 8px; text-align: center; cursor: pointer; aspect-ratio: 1 / 1; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: transform 0.12s, border-color 0.2s; }
     .inv-slot:active { transform: scale(0.95); }
     .inv-slot .inv-ic { font-size: 2rem; margin-bottom: 6px; line-height: 1; }
     .inv-slot .inv-nombre { font-size: 0.72rem; color: #f4e4c1; line-height: 1.2; }
-
-    /* El objeto clasificado se ve misterioso */
-    .inv-slot.clasificado {
-      background: linear-gradient(145deg, #1a1a22, #0d0d14);
-      border-color: #4a4a66;
-      border-style: dashed;
-    }
+    .inv-slot.clasificado { background: linear-gradient(145deg, #1a1a22, #0d0d14); border-color: #4a4a66; border-style: dashed; }
     .inv-slot.clasificado .inv-ic { color: #8a8ab0; }
     .inv-slot.clasificado .inv-nombre { color: #8a8ab0; letter-spacing: 1px; }
-
-    /* ==========================================================
-       TESORO DE LA CAPITANA (mercado de recompensas)
-       ========================================================== */
-    .tesoro-saldo {
-      text-align: center;
-      font-size: 1.3rem; font-weight: bold; color: #e8c24a;
-      margin-bottom: 18px; padding-bottom: 14px;
-      border-bottom: 1px solid rgba(138,109,59,0.4);
-    }
-    .vale {
-      background: linear-gradient(135deg, #2a1d0e, #22160c);
-      border: 1px solid #8a6d3b;
-      border-radius: 10px;
-      padding: 16px;
-      margin-bottom: 14px;
-    }
+    .tesoro-saldo { text-align: center; font-size: 1.3rem; font-weight: bold; color: #e8c24a; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid rgba(138,109,59,0.4); }
+    .vale { background: linear-gradient(135deg, #2a1d0e, #22160c); border: 1px solid #8a6d3b; border-radius: 10px; padding: 16px; margin-bottom: 14px; }
     .vale .vale-nombre { font-size: 1.1rem; color: #f4e4c1; margin-bottom: 2px; }
     .vale .vale-desc { font-size: 0.85rem; opacity: 0.85; margin-bottom: 12px; line-height: 1.4; }
     .vale .vale-pie { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
     .vale .vale-costo { font-size: 1.05rem; color: #e8c24a; font-weight: bold; white-space: nowrap; }
-    .vale-btn {
-      background: #c0392b; color: #fff; border: 1px solid #f4e4c1;
-      border-radius: 8px; padding: 10px 18px; font-size: 0.9rem;
-      font-family: inherit; cursor: pointer; white-space: nowrap;
-    }
+    .vale-btn { background: #c0392b; color: #fff; border: 1px solid #f4e4c1; border-radius: 8px; padding: 10px 18px; font-size: 0.9rem; font-family: inherit; cursor: pointer; white-space: nowrap; }
     .vale-btn:disabled { background: #444; border-color: #666; color: #999; cursor: not-allowed; }
-
-    /* Estados del vale */
     .vale.estado-canjeada { opacity: 0.6; border-style: dashed; }
-    .vale.estado-canjeada .vale-nombre::after { content: ' ✔'; color: #d4a017; }
+    .vale.estado-canjeada .vale-nombre::after { content: ' \2714'; color: #d4a017; }
     .vale-faltan { font-size: 0.78rem; color: #e0a0a0; font-style: italic; }
     .vale-canjeada-txt { font-size: 0.78rem; color: #cbb489; font-style: italic; }
     .vale.estado-bloqueada { opacity: 0.5; }
-    
-    /* ==========================================================
-       CELEBRACIÓN DE DESCUBRIMIENTO (elegante)
-       ========================================================== */
-    .cel-titulo {
-      font-size: 1.15rem; letter-spacing: 2px; text-transform: uppercase;
-      color: #cbb489; opacity: 0; animation: cel-aparece 0.6s ease forwards;
-    }
-    .cel-nombre {
-      font-size: 1.7rem; color: #f4e4c1; margin: 10px 0 2px;
-      opacity: 0; animation: cel-aparece 0.7s ease 0.4s forwards;
-    }
-    .cel-real {
-      color: #e8c24a; font-size: 1.05rem; margin: 6px 0 4px; line-height: 1.4;
-      opacity: 0; animation: cel-aparece 0.8s ease 1.1s forwards;
-    }
+    .cel-titulo { font-size: 1.15rem; letter-spacing: 2px; text-transform: uppercase; color: #cbb489; opacity: 0; animation: cel-aparece 0.6s ease forwards; }
+    .cel-nombre { font-size: 1.7rem; color: #f4e4c1; margin: 10px 0 2px; opacity: 0; animation: cel-aparece 0.7s ease 0.4s forwards; }
+    .cel-real { color: #e8c24a; font-size: 1.05rem; margin: 6px 0 4px; line-height: 1.4; opacity: 0; animation: cel-aparece 0.8s ease 1.1s forwards; }
     .cel-real small { display:block; color:#cbb489; font-size:0.8rem; letter-spacing:1px; text-transform:uppercase; margin-bottom:2px; }
-    .cel-berries {
-      font-size: 2.1rem; font-weight: bold; color: #e8c24a; margin: 16px 0 4px;
-      opacity: 0; animation: cel-aparece 0.6s ease 1.8s forwards;
-      text-shadow: 0 0 14px rgba(232,194,74,0.5);
-    }
-    .cel-frase {
-      font-style: italic; color: #cbb489; font-size: 0.9rem; margin-top: 10px;
-      opacity: 0; animation: cel-aparece 1s ease 2.3s forwards;
-    }
-    .cel-boton {
-      opacity: 0; animation: cel-aparece 0.6s ease 2.6s forwards;
-    }
-    @keyframes cel-aparece {
-      from { opacity: 0; transform: translateY(10px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Lluvia de destellos dorados */
-    #cel-destellos {
-      position: fixed; inset: 0; pointer-events: none; z-index: 60; overflow: hidden;
-    }
-    .destello {
-      position: absolute; top: -20px;
-      width: 10px; height: 10px; border-radius: 50%;
-      background: radial-gradient(circle, #ffe9a8 0%, #e8c24a 60%, transparent 70%);
-      animation: caer linear forwards;
-    }
-    @keyframes caer {
-      to { transform: translateY(110vh) rotate(360deg); opacity: 0; }
-    }
-
-    /* ==========================================================
-       MODO PRIMER OFICIAL
-       ========================================================== */
-    #admin-fondo {
-      display: none;
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.85);
-      z-index: 100;
-      align-items: center; justify-content: center;
-      padding: 24px;
-    }
+    .cel-berries { font-size: 2.1rem; font-weight: bold; color: #e8c24a; margin: 16px 0 4px; opacity: 0; animation: cel-aparece 0.6s ease 1.8s forwards; text-shadow: 0 0 14px rgba(232,194,74,0.5); }
+    .cel-frase { font-style: italic; color: #cbb489; font-size: 0.9rem; margin-top: 10px; opacity: 0; animation: cel-aparece 1s ease 2.3s forwards; }
+    .cel-boton { opacity: 0; animation: cel-aparece 0.6s ease 2.6s forwards; }
+    @keyframes cel-aparece { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    #cel-destellos { position: fixed; inset: 0; pointer-events: none; z-index: 60; overflow: hidden; }
+    .destello { position: absolute; top: -20px; width: 10px; height: 10px; border-radius: 50%; background: radial-gradient(circle, #ffe9a8 0%, #e8c24a 60%, transparent 70%); animation: caer linear forwards; }
+    @keyframes caer { to { transform: translateY(110vh) rotate(360deg); opacity: 0; } }
+    #admin-fondo { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; align-items: center; justify-content: center; padding: 24px; }
     #admin-fondo.abierto { display: flex; }
-    #admin-caja {
-      background: #1a1206;
-      border: 2px solid #6b5528;
-      border-radius: 14px;
-      max-width: 420px; width: 100%;
-      max-height: 88vh; overflow-y: auto;
-      padding: 28px 24px; text-align: center;
-    }
+    #admin-caja { background: #1a1206; border: 2px solid #6b5528; border-radius: 14px; max-width: 420px; width: 100%; max-height: 88vh; overflow-y: auto; padding: 28px 24px; text-align: center; }
     .admin-sello { font-size: 2.4rem; margin-bottom: 6px; }
     #admin-caja h3 { letter-spacing: 3px; color: #e8c24a; margin: 0 0 10px; font-size: 1.1rem; }
     .admin-nota { font-size: 0.85rem; opacity: 0.75; line-height: 1.4; margin-bottom: 18px; }
-    #admin-clave {
-      width: 100%; padding: 14px; font-size: 1rem;
-      background: #0d0a04; border: 1px solid #6b5528; border-radius: 8px;
-      color: #f4e4c1; font-family: inherit; text-align: center; letter-spacing: 2px;
-      margin-bottom: 10px;
-    }
+    #admin-clave { width: 100%; padding: 14px; font-size: 1rem; background: #0d0a04; border: 1px solid #6b5528; border-radius: 8px; color: #f4e4c1; font-family: inherit; text-align: center; letter-spacing: 2px; margin-bottom: 10px; }
     .admin-error { color: #e57373; font-size: 0.85rem; min-height: 20px; margin-bottom: 8px; }
-
-    .admin-seccion {
-      background: rgba(0,0,0,0.25);
-      border: 1px solid #4a3c1e;
-      border-radius: 10px;
-      padding: 14px;
-      margin-bottom: 14px;
-      text-align: left;
-    }
-    .admin-seccion-tit {
-      font-size: 0.8rem; letter-spacing: 1px; text-transform: uppercase;
-      color: #cbb489; margin-bottom: 10px;
-    }
+    .admin-seccion { background: rgba(0,0,0,0.25); border: 1px solid #4a3c1e; border-radius: 10px; padding: 14px; margin-bottom: 14px; text-align: left; }
+    .admin-seccion-tit { font-size: 0.8rem; letter-spacing: 1px; text-transform: uppercase; color: #cbb489; margin-bottom: 10px; }
     .admin-diag { font-size: 0.85rem; line-height: 1.6; opacity: 0.9; margin-bottom: 10px; white-space: pre-line; }
-    .admin-etiqueta {
-      display: block;
-      font-size: 0.75rem;
-      color: #cbb489;
-      opacity: 0.85;
-      margin-bottom: 5px;
-    }
-    .admin-input {
-      width: 100%; padding: 12px; font-size: 0.95rem;
-      background: #0d0a04; border: 1px solid #6b5528; border-radius: 8px;
-      color: #f4e4c1; font-family: inherit; margin-bottom: 10px;
-    }
+    .admin-etiqueta { display: block; font-size: 0.75rem; color: #cbb489; opacity: 0.85; margin-bottom: 5px; }
+    .admin-input { width: 100%; padding: 12px; font-size: 0.95rem; background: #0d0a04; border: 1px solid #6b5528; border-radius: 8px; color: #f4e4c1; font-family: inherit; margin-bottom: 10px; }
     textarea.admin-input { resize: vertical; line-height: 1.5; }
-    .admin-btn-mini {
-      width: 100%; padding: 12px; font-size: 0.9rem;
-      background: #3a5a40; color: #fff; border: 1px solid #6b8e6f;
-      border-radius: 8px; font-family: inherit; cursor: pointer;
-    }
+    .admin-btn-mini { width: 100%; padding: 12px; font-size: 0.9rem; background: #3a5a40; color: #fff; border: 1px solid #6b8e6f; border-radius: 8px; font-family: inherit; cursor: pointer; }
     .admin-peligro { border-color: #7a2a22; }
     .admin-btn-rojo { background: #7a2a22; border-color: #c0392b; }
-        .admin-economia {
-      font-size: 0.8rem; padding: 10px 12px; border-radius: 8px;
-      margin-bottom: 12px; line-height: 1.5;
-    }
+    .admin-economia { font-size: 0.8rem; padding: 10px 12px; border-radius: 8px; margin-bottom: 12px; line-height: 1.5; }
     .admin-economia.ok { background: rgba(58,90,64,0.3); border: 1px solid #3a5a40; color: #a8d0ae; }
     .admin-economia.mal { background: rgba(122,42,34,0.3); border: 1px solid #7a2a22; color: #e0a0a0; }
     .admin-rew-edit { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(107,85,40,0.3); font-size: 0.85rem; }
     .admin-rew-edit:last-child { border-bottom: none; }
     .admin-rew-edit-btn { background: #4a3c1e; color: #f4e4c1; border: 1px solid #6b5528; border-radius: 6px; padding: 6px 10px; font-size: 0.75rem; font-family: inherit; cursor: pointer; white-space: nowrap; }
     .admin-rew-inactiva { opacity: 0.5; }
-        .admin-rew-item {
-      display: flex; justify-content: space-between; align-items: center;
-      gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(107,85,40,0.3);
-      font-size: 0.85rem;
-    }
+    .admin-rew-item { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(107,85,40,0.3); font-size: 0.85rem; }
     .admin-rew-item:last-child { border-bottom: none; }
     .admin-rew-nombre { color: #f4e4c1; }
     .admin-rew-estado { font-size: 0.72rem; color: #cbb489; }
-    .admin-rew-btn {
-      background: #3a5a40; color: #fff; border: 1px solid #6b8e6f;
-      border-radius: 6px; padding: 6px 10px; font-size: 0.78rem;
-      font-family: inherit; cursor: pointer; white-space: nowrap;
-    }
+    .admin-rew-btn { background: #3a5a40; color: #fff; border: 1px solid #6b8e6f; border-radius: 6px; padding: 6px 10px; font-size: 0.78rem; font-family: inherit; cursor: pointer; white-space: nowrap; }
     .admin-msg { font-size: 0.85rem; margin-top: 8px; min-height: 18px; }
-
-    /* ==========================================================
-       BARRA DE NAVEGACIÓN INFERIOR
-       ========================================================== */
-    #nav {
-      display: flex;
-      background: #14202c;
-      border-top: 1px solid #3a2f1a;
-      padding-bottom: env(safe-area-inset-bottom, 0px);
-    }
-    .nav-btn {
-      flex: 1;
-      background: none;
-      border: none;
-      color: #cbb489;
-      padding: 10px 4px;
-      font-size: 0.72rem;
-      font-family: inherit;
-      cursor: pointer;
-      opacity: 0.7;
-      transition: opacity 0.2s, color 0.2s;
-    }
+    #nav { display: flex; background: #14202c; border-top: 1px solid #3a2f1a; padding-bottom: env(safe-area-inset-bottom, 0px); }
+    .nav-btn { flex: 1; background: none; border: none; color: #cbb489; padding: 10px 4px; font-size: 0.72rem; font-family: inherit; cursor: pointer; opacity: 0.7; transition: opacity 0.2s, color 0.2s; }
     .nav-btn .ic { font-size: 1.3rem; display: block; margin-bottom: 2px; }
     .nav-btn.activa { opacity: 1; color: #f4e4c1; }
-
-    /* --- Menú "Más" desplegable --- */
-    #menu-mas {
-      display: none;
-      position: fixed;
-      bottom: 64px;
-      left: 0; right: 0;
-      background: #14202c;
-      border-top: 1px solid #3a2f1a;
-      padding: 8px;
-      z-index: 10;
-    }
+    #menu-mas { display: none; position: fixed; bottom: 64px; left: 0; right: 0; background: #14202c; border-top: 1px solid #3a2f1a; padding: 8px; z-index: 10; }
     #menu-mas.abierto { display: flex; justify-content: space-around; }
-    #menu-mas button {
-      background: none; border: none; color: #f4e4c1;
-      font-family: inherit; font-size: 0.8rem; padding: 12px; cursor: pointer;
-    }
+    #menu-mas button { background: none; border: none; color: #f4e4c1; font-family: inherit; font-size: 0.8rem; padding: 12px; cursor: pointer; }
     #menu-mas .ic { font-size: 1.4rem; display: block; margin-bottom: 4px; }
   </style>
 </head>
@@ -603,11 +168,9 @@
 
   <div id="contenido">
 
-    <!-- ================= INICIO ================= -->
     <section class="pantalla activa" id="p-inicio">
       <h1 id="emblema">🏴‍☠️ La Aventura de la Capitana Karen</h1>
       <div class="sub" id="oficial">cargando…</div>
-
       <div class="tarjeta">
         <div class="dato">CAPITANA: <strong id="capitana">…</strong></div>
         <div class="dato">EXPEDICIÓN</div>
@@ -617,8 +180,6 @@
         <div style="margin-top:14px;">⚓ MISIÓN ACTUAL</div>
         <div id="mision" class="cargando">…</div>
       </div>
-
-      <!-- Accesos tipo "puente de mando" (idea de la Opción B) -->
       <div class="accesos">
         <div class="acceso" onclick="irA('archivo')"><span class="ic">📖</span>Archivo</div>
         <div class="acceso" onclick="irA('inventario')"><span class="ic">🎒</span>Inventario</div>
@@ -626,53 +187,40 @@
       </div>
     </section>
 
-    <!-- ================= MAPA ================= -->
     <section class="pantalla" id="p-mapa">
       <div id="mapa-visor">
         <div id="mapa-lienzo">
           <img id="mapa-img" src="mapa.jpg" alt="Mapa de la expedición" draggable="false">
-          <!-- Los marcadores se generan por JavaScript aquí -->
         </div>
         <div id="mapa-ayuda">Arrastra para explorar · pellizca para acercar</div>
       </div>
     </section>
 
-    <!-- ================= MISIONES ================= -->
     <section class="pantalla" id="p-misiones">
       <h2>⚔️ Misiones</h2>
-      <div id="misiones-lista">
-        <!-- Las misiones se generan por JavaScript -->
-      </div>
+      <div id="misiones-lista"></div>
     </section>
 
-    <!-- ================= TESORO ================= -->
     <section class="pantalla" id="p-tesoro">
       <h2>🏴‍☠️ Tesoro de la Capitana</h2>
       <div id="tesoro-saldo" class="tesoro-saldo">🪙 … Berries</div>
-      <div id="tesoro-lista">
-        <!-- Las recompensas se generan por JavaScript -->
-      </div>
+      <div id="tesoro-lista"></div>
     </section>
 
-    <!-- ================= ARCHIVO ================= -->
     <section class="pantalla" id="p-archivo">
       <h2>📖 Archivo de la Expedición</h2>
       <div id="archivo-progreso" class="archivo-progreso">…</div>
-      <div id="archivo-lista">
-        <!-- Las entradas se generan por JavaScript -->
-      </div>
+      <div id="archivo-lista"></div>
     </section>
 
-    <!-- ================= INVENTARIO ================= -->
     <section class="pantalla" id="p-inventario">
       <h2>🎒 Inventario</h2>
       <div id="inv-equipo-tit" class="inv-cat-tit">Equipo inicial</div>
-      <div id="inv-equipo" class="inv-grid"><!-- slots por JS --></div>
+      <div id="inv-equipo" class="inv-grid"></div>
       <div id="inv-descubiertos-tit" class="inv-cat-tit" style="display:none;">Objetos descubiertos</div>
-      <div id="inv-descubiertos" class="inv-grid"><!-- slots por JS --></div>
+      <div id="inv-descubiertos" class="inv-grid"></div>
     </section>
 
-    <!-- ================= BITÁCORA ================= -->
     <section class="pantalla" id="p-bitacora">
       <h2>📓 Bitácora</h2>
       <div class="placeholder">Aquí la Capitana escribirá su diario de viaje.</div>
@@ -680,14 +228,12 @@
 
   </div>
 
-  <!-- Menú "Más" (secciones secundarias) -->
   <div id="menu-mas">
     <button onclick="irA('archivo')"><span class="ic">📖</span>Archivo</button>
     <button onclick="irA('inventario')"><span class="ic">🎒</span>Inventario</button>
     <button onclick="irA('bitacora')"><span class="ic">📓</span>Bitácora</button>
   </div>
 
-  <!-- Barra de navegación inferior -->
   <nav id="nav">
     <button class="nav-btn activa" data-p="inicio" onclick="irA('inicio')"><span class="ic">🏠</span>Inicio</button>
     <button class="nav-btn" data-p="mapa" onclick="irA('mapa')"><span class="ic">🗺️</span>Mapa</button>
@@ -696,19 +242,12 @@
     <button class="nav-btn" data-p="mas" onclick="toggleMas()"><span class="ic">☰</span>Más</button>
   </nav>
 
-  <!-- ============ VENTANA EMERGENTE (modal) de territorio ============ -->
   <div id="modal-fondo" onclick="cerrarModalSiFondo(event)">
-    <div id="modal-caja">
-      <div id="modal-contenido">
-        <!-- Se llena por JavaScript -->
-      </div>
-    </div>
+    <div id="modal-caja"><div id="modal-contenido"></div></div>
   </div>
 
-  <!-- Lluvia de destellos de la celebración -->
   <div id="cel-destellos"></div>
 
-  <!-- ============ MODO PRIMER OFICIAL (oculto) ============ -->
   <div id="admin-fondo">
     <div id="admin-caja">
       <div id="admin-login">
@@ -720,7 +259,6 @@
         <button class="modal-btn" onclick="intentarLogin()">ACCEDER</button>
         <button class="modal-btn secundario" onclick="cerrarAdmin()">Cancelar</button>
       </div>
-
       <div id="admin-panel" style="display:none;">
         <button class="modal-cerrar" onclick="cerrarAdmin()">&times;</button>
         <div class="admin-sello">⚓</div>
@@ -728,31 +266,23 @@
         <p class="admin-nota" id="admin-sesion-info">Sesión activa.</p>
         <div id="admin-herramientas">
 
-          <!-- Diagnóstico -->
           <div class="admin-seccion">
             <div class="admin-seccion-tit">Diagnóstico</div>
             <div id="admin-diag" class="admin-diag">—</div>
             <button class="admin-btn-mini" onclick="adminVerDiagnostico()">Actualizar diagnóstico</button>
           </div>
 
-          <!-- Ajustar Berries -->
           <div class="admin-seccion">
             <div class="admin-seccion-tit">Ajustar Berries (pruebas)</div>
-
-            <!-- Sumar / restar -->
             <label class="admin-etiqueta">Sumar o restar (ej: 100 o -50)</label>
             <input type="number" id="admin-monto" class="admin-input" placeholder="Ej: 100 o -50">
             <button class="admin-btn-mini" onclick="adminSumarBerries()">Aplicar ajuste</button>
-
-            <!-- Fijar saldo exacto -->
             <label class="admin-etiqueta" style="margin-top:14px;">Fijar saldo exacto</label>
             <input type="number" id="admin-saldo" class="admin-input" placeholder="Ej: 200" min="0">
             <button class="admin-btn-mini" onclick="adminFijarSaldo()">Fijar saldo</button>
-
             <p class="admin-nota" style="margin-top:10px;margin-bottom:0;">Estos ajustes no aparecen en el historial de la Capitana.</p>
           </div>
 
-          <!-- Editar territorios -->
           <div class="admin-seccion">
             <div class="admin-seccion-tit">Editar territorios</div>
             <label class="admin-etiqueta">Elige un territorio</label>
@@ -763,40 +293,27 @@
               <label class="admin-etiqueta">Nombre en el mapa (visible para Karen)</label>
               <input type="text" id="terr-clave" class="admin-input">
               <div class="admin-nota" style="margin:-4px 0 10px;">⚠️ Este nombre está en el mapa físico de Karen. Cámbialo solo si es necesario.</div>
-
               <label class="admin-etiqueta">Nombre real</label>
               <input type="text" id="terr-real" class="admin-input">
-
               <label class="admin-etiqueta">Subtítulo</label>
               <input type="text" id="terr-sub" class="admin-input">
-
               <label class="admin-etiqueta">Descripción (lo que Karen lee al descubrir)</label>
               <textarea id="terr-desc" class="admin-input" rows="4"></textarea>
-
               <label class="admin-etiqueta">Curiosidades (una por renglón)</label>
               <textarea id="terr-curio" class="admin-input" rows="5" placeholder="Escribe una curiosidad por línea…"></textarea>
-
               <label class="admin-etiqueta">Recompensa en Berries</label>
               <input type="number" id="terr-rec" class="admin-input" min="0">
               <div class="admin-nota" id="terr-sugerencia" style="margin:-4px 0 10px;"></div>
-
               <button class="admin-btn-mini" onclick="adminGuardarTerritorio()">Guardar territorio</button>
               <div id="terr-msg" class="admin-msg"></div>
             </div>
           </div>
 
-          <!-- Editar recompensas -->
           <div class="admin-seccion">
             <div class="admin-seccion-tit">Editar recompensas</div>
-
-            <!-- Semáforo de economía -->
             <div id="admin-economia" class="admin-economia">—</div>
-
-            <!-- Lista de recompensas -->
             <div id="admin-rew-lista">—</div>
             <button class="admin-btn-mini" onclick="adminCargarRecompensasFull()" style="margin-top:8px;">Ver / recargar recompensas</button>
-
-            <!-- Formulario (crear/editar) -->
             <div id="admin-rew-form" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid rgba(107,85,40,0.4);">
               <div class="admin-seccion-tit" id="admin-rew-form-tit">Nueva recompensa</div>
               <label class="admin-etiqueta">Nombre</label>
@@ -810,31 +327,50 @@
                 <option value="base">Base</option>
                 <option value="especial">Especial</option>
               </select>
-              <label class="admin-etiqueta">
-                <input type="checkbox" id="rew-activo" checked> Visible para la Capitana
-              </label>
+              <label class="admin-etiqueta"><input type="checkbox" id="rew-activo" checked> Visible para la Capitana</label>
               <button class="admin-btn-mini" onclick="adminGuardarRecompensa()" style="margin-top:10px;">Guardar</button>
               <button class="admin-btn-mini" onclick="adminCancelarRewForm()" style="background:transparent;border-color:#6b5528;color:#cbb489;margin-top:6px;">Cancelar</button>
               <div id="rew-msg" class="admin-msg"></div>
             </div>
-
             <button class="admin-btn-mini" onclick="adminNuevaRecompensa()" style="margin-top:10px;background:#3a5a40;">+ Crear recompensa nueva</button>
           </div>
-          
-          <!-- Reabrir recompensas -->
+
+          <div class="admin-seccion">
+            <div class="admin-seccion-tit">Editar misiones</div>
+            <div id="admin-mis-lista">—</div>
+            <button class="admin-btn-mini" onclick="adminCargarMisionesFull()" style="margin-top:8px;">Ver / recargar misiones</button>
+            <div id="admin-mis-form" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid rgba(107,85,40,0.4);">
+              <div class="admin-seccion-tit" id="admin-mis-form-tit">Nueva misión</div>
+              <label class="admin-etiqueta">Título</label>
+              <input type="text" id="mis-titulo" class="admin-input">
+              <label class="admin-etiqueta">Descripción</label>
+              <textarea id="mis-desc" class="admin-input" rows="3"></textarea>
+              <label class="admin-etiqueta">Categoría</label>
+              <select id="mis-cat" class="admin-input">
+                <option value="memoria">Memoria (TikToks, recuerdos)</option>
+                <option value="exploracion">Exploración</option>
+              </select>
+              <label class="admin-etiqueta">Recompensa en Berries</label>
+              <input type="number" id="mis-rec" class="admin-input" min="0">
+              <label class="admin-etiqueta"><input type="checkbox" id="mis-evidencia"> Puede guardar una fotografía</label>
+              <button class="admin-btn-mini" onclick="adminGuardarMision()" style="margin-top:10px;">Guardar</button>
+              <button class="admin-btn-mini" onclick="adminCancelarMisForm()" style="background:transparent;border-color:#6b5528;color:#cbb489;margin-top:6px;">Cancelar</button>
+              <div id="mis-msg" class="admin-msg"></div>
+            </div>
+            <button class="admin-btn-mini" onclick="adminNuevaMision()" style="margin-top:10px;background:#3a5a40;">+ Crear misión nueva</button>
+          </div>
+
           <div class="admin-seccion">
             <div class="admin-seccion-tit">Recompensas canjeadas</div>
             <p class="admin-nota" style="margin-bottom:10px;">Reabre una recompensa para que la Capitana pueda canjearla de nuevo.</p>
             <div id="admin-recompensas">—</div>
             <button class="admin-btn-mini" onclick="adminCargarRecompensas()" style="margin-top:8px;">Ver recompensas</button>
           </div>
-          
-          <!-- Correcciones y zona de peligro -->
+
           <div class="admin-seccion admin-peligro">
             <div class="admin-seccion-tit">Correcciones</div>
             <p class="admin-nota" style="margin-bottom:10px;">Revierte el último territorio descubierto (por si se marcó sin querer). Devuelve sus Berries.</p>
             <button class="admin-btn-mini" onclick="adminDeshacerDescubrimiento()" style="margin-bottom:16px;">↩️ Deshacer último descubrimiento</button>
-
             <div class="admin-seccion-tit">Zona de peligro</div>
             <p class="admin-nota" style="margin-bottom:10px;">Resetea territorios, misiones, Berries y recompensas. Conserva la bitácora.</p>
             <button class="admin-btn-mini admin-btn-rojo" onclick="adminPedirReset()">🔄 Resetear progreso</button>
@@ -847,60 +383,38 @@
   </div>
 
   <script>
-    // ⚓ Dirección del cerebro (Apps Script). Pega tu URL /exec:
     const URL_CEREBRO = "https://script.google.com/macros/s/AKfycbw70-gJwLl8OMSQ9RId5b9rgjJKkJP3zfVv4W4_piEWYezPH-sKHCMf7deFiVurNXvc/exec";
 
-    // ==========================================================
-    //  NAVEGACIÓN entre pantallas
-    // ==========================================================
+    // ===== NAVEGACIÓN =====
     function irA(nombre) {
-      document.querySelectorAll('.pantalla').forEach(function(p) {
-        p.classList.remove('activa');
-      });
+      document.querySelectorAll('.pantalla').forEach(function(p) { p.classList.remove('activa'); });
       var destino = document.getElementById('p-' + nombre);
       if (destino) destino.classList.add('activa');
-
       document.querySelectorAll('.nav-btn').forEach(function(b) {
         b.classList.toggle('activa', b.getAttribute('data-p') === nombre);
       });
-
       cerrarMas();
       document.getElementById('contenido').scrollTop = 0;
-
-      // Al entrar al Mapa: iniciarlo (una vez), reajustar y mostrar la ayuda.
       if (nombre === 'mapa') {
         iniciarMapa();
-        // Pequeño retardo para que el visor ya tenga su tamaño final.
         setTimeout(function() {
           if (mapaImg && mapaImg.naturalWidth) ajustarZoomInicial();
           mostrarAyudaMapa();
         }, 60);
       }
     }
-
-    // Muestra el letrero de ayuda 5 segundos y lo desvanece.
     let ayudaTimer = null;
     function mostrarAyudaMapa() {
       const ayuda = document.getElementById('mapa-ayuda');
       if (!ayuda) return;
       ayuda.classList.add('visible');
       if (ayudaTimer) clearTimeout(ayudaTimer);
-      ayudaTimer = setTimeout(function() {
-        ayuda.classList.remove('visible');
-      }, 5000);
+      ayudaTimer = setTimeout(function() { ayuda.classList.remove('visible'); }, 5000);
     }
+    function toggleMas() { document.getElementById('menu-mas').classList.toggle('abierto'); }
+    function cerrarMas() { document.getElementById('menu-mas').classList.remove('abierto'); }
 
-    // -------- Menú "Más" --------
-    function toggleMas() {
-      document.getElementById('menu-mas').classList.toggle('abierto');
-    }
-    function cerrarMas() {
-      document.getElementById('menu-mas').classList.remove('abierto');
-    }
-
-    // ==========================================================
-    //  CARGA DE DATOS DEL INICIO (desde el cerebro)
-    // ==========================================================
+    // ===== CARGA DE DATOS =====
     function pintarEstado(estado) {
       document.getElementById('capitana').textContent = estado.capitana;
       document.getElementById('oficial').textContent = 'Primer Oficial: ' + estado.primer_oficial;
@@ -912,230 +426,117 @@
       var mision = document.getElementById('mision');
       mision.textContent = estado.mision_actual ? estado.mision_actual.titulo : '(sin misión activa)';
       mision.classList.remove('cargando');
-
-      // El mapa arrancará enfocado en el primer territorio no descubierto.
       mapaFocoIndice = Math.min(estado.progreso.descubiertos, TERRITORIOS_MAPA.length - 1);
-
-           // Guardar los estados de territorio que llegan del cerebro.
       if (estado.territorios) {
         ESTADOS_TERRITORIO = {};
-        estado.territorios.forEach(function(t) {
-          ESTADOS_TERRITORIO[t.id] = t;
-        });
-        // Guardar el orden de la lista tal como llega (para el Archivo).
+        estado.territorios.forEach(function(t) { ESTADOS_TERRITORIO[t.id] = t; });
         LISTA_TERRITORIOS = estado.territorios;
-        // Si el mapa ya está pintado, refrescar los marcadores.
-        if (mapaIniciado && mapaImg && mapaImg.naturalWidth) {
-          pintarMarcadores();
-        }
-        // Refrescar el Archivo con los datos nuevos.
+        if (mapaIniciado && mapaImg && mapaImg.naturalWidth) { pintarMarcadores(); }
         pintarArchivo();
       }
-
-      // Guardar y pintar las misiones.
-      if (estado.misiones) {
-        LISTA_MISIONES = estado.misiones;
-        pintarMisiones();
-      }
-
-      // Guardar y pintar el inventario.
-      if (estado.inventario) {
-        LISTA_INVENTARIO = estado.inventario;
-        pintarInventario();
-      }
-
-      // Guardar y pintar el Tesoro (recompensas).
+      if (estado.misiones) { LISTA_MISIONES = estado.misiones; pintarMisiones(); }
+      if (estado.inventario) { LISTA_INVENTARIO = estado.inventario; pintarInventario(); }
       SALDO_ACTUAL = estado.berries;
-      if (estado.recompensas) {
-        LISTA_RECOMPENSAS = estado.recompensas;
-        pintarTesoro();
-      }
+      if (estado.recompensas) { LISTA_RECOMPENSAS = estado.recompensas; pintarTesoro(); }
     }
     function mostrarError() {
-      document.getElementById('oficial').textContent =
-        'La brújula perdió temporalmente la señal. Intenta nuevamente.';
+      document.getElementById('oficial').textContent = 'La brújula perdió temporalmente la señal. Intenta nuevamente.';
     }
 
-        // ==========================================================
-    //  ARCHIVO DE LA EXPEDICIÓN (el libro que se va llenando)
-    // ==========================================================
+    // ===== ARCHIVO =====
     let LISTA_TERRITORIOS = [];
-
     function pintarArchivo() {
       const cont = document.getElementById('archivo-lista');
       const prog = document.getElementById('archivo-progreso');
       if (!cont || !LISTA_TERRITORIOS.length) return;
-
-      // Contar descubiertos.
-      const descubiertos = LISTA_TERRITORIOS.filter(function(t) {
-        return t.estado === 'descubierto';
-      }).length;
+      const descubiertos = LISTA_TERRITORIOS.filter(function(t) { return t.estado === 'descubierto'; }).length;
       const total = LISTA_TERRITORIOS.length;
-
-      prog.innerHTML = '<strong>' + descubiertos + '</strong> de <strong>' + total +
-                       '</strong> territorios registrados';
-
-      // Dibujar cada territorio: página escrita o página en blanco.
+      prog.innerHTML = '<strong>' + descubiertos + '</strong> de <strong>' + total + '</strong> territorios registrados';
       let html = '';
       LISTA_TERRITORIOS.forEach(function(t) {
         if (t.estado === 'descubierto') {
-          html +=
-            '<div class="pagina" onclick="abrirTerritorio(\'' + t.id + '\')">' +
+          html += '<div class="pagina" onclick="abrirTerritorio(\'' + t.id + '\')">' +
               '<div class="pag-clave">' + t.nombre_clave + '</div>' +
               (t.nombre_real ? '<div class="pag-real">' + t.nombre_real + '</div>' : '') +
               (t.fecha_descubierto ? '<div class="pag-fecha">Descubierto: ' + t.fecha_descubierto + '</div>' : '') +
-              '<div class="pag-ver">Toca para ver el registro</div>' +
-            '</div>';
+              '<div class="pag-ver">Toca para ver el registro</div></div>';
         } else {
-          // Página en blanco: no revela cuál territorio es.
-          html +=
-            '<div class="pagina-blanco">' +
-              '<span class="sello">&#9906;</span>' +
-              'Página por escribir…' +
-            '</div>';
+          html += '<div class="pagina-blanco"><span class="sello">&#9906;</span>Página por escribir…</div>';
         }
       });
       cont.innerHTML = html;
     }
 
-        // ==========================================================
-    //  MISIONES (agrupadas por categoría)
-    // ==========================================================
+    // ===== MISIONES =====
     let LISTA_MISIONES = [];
-
-    // Nombres bonitos de cada categoría y su orden de aparición.
     const CATEGORIAS_MIS = [
       { clave: 'principal',   titulo: '⚓ Misiones Principales' },
       { clave: 'exploracion', titulo: '🧭 Misiones de Exploración' },
       { clave: 'memoria',     titulo: '📱 Misiones de Memoria' }
     ];
-
-    // Etiquetas legibles para cada estado.
-    const ESTADO_MIS_TXT = {
-      'bloqueada':   'Bloqueada',
-      'disponible':  'Disponible',
-      'en_progreso': 'En progreso',
-      'completada':  'Completada'
-    };
-
+    const ESTADO_MIS_TXT = { 'bloqueada': 'Bloqueada', 'disponible': 'Disponible', 'en_progreso': 'En progreso', 'completada': 'Completada' };
     function pintarMisiones() {
       const cont = document.getElementById('misiones-lista');
       if (!cont || !LISTA_MISIONES.length) return;
-
       let html = '';
-
-      // Recorrer cada categoría en orden.
       CATEGORIAS_MIS.forEach(function(cat) {
-        const delGrupo = LISTA_MISIONES.filter(function(m) {
-          return m.categoria === cat.clave;
-        });
-        if (delGrupo.length === 0) return; // no mostrar grupos vacíos
-
+        const delGrupo = LISTA_MISIONES.filter(function(m) { return m.categoria === cat.clave; });
+        if (delGrupo.length === 0) return;
         html += '<div class="mis-grupo-tit">' + cat.titulo + '</div>';
-
         delGrupo.forEach(function(m) {
           const estadoTxt = ESTADO_MIS_TXT[m.estado] || m.estado;
           const bloqueada = (m.estado === 'bloqueada');
-
           if (bloqueada) {
-            // Pergamino sellado: solo título y "sellada", sin contenido.
-            html +=
-              '<div class="mision estado-bloqueada" style="cursor:pointer;" onclick="abrirMision(\'' + m.id + '\')">' +
-                '<div class="mis-cab">' +
-                  '<div class="mis-titulo">' + m.titulo + '</div>' +
-                  '<div class="mis-estado">Sellada</div>' +
-                '</div>' +
-                '<div class="mis-desc mis-sellada">Aún no es momento de descubrir esta misión…</div>' +
-              '</div>';
+            html += '<div class="mision estado-bloqueada" style="cursor:pointer;" onclick="abrirMision(\'' + m.id + '\')">' +
+                '<div class="mis-cab"><div class="mis-titulo">' + m.titulo + '</div><div class="mis-estado">Sellada</div></div>' +
+                '<div class="mis-desc mis-sellada">Aún no es momento de descubrir esta misión…</div></div>';
           } else {
-            html +=
-              '<div class="mision estado-' + m.estado + '" style="cursor:pointer;" onclick="abrirMision(\'' + m.id + '\')">' +
-                '<div class="mis-cab">' +
-                  '<div class="mis-titulo">' + m.titulo + '</div>' +
-                  '<div class="mis-estado">' + estadoTxt + '</div>' +
-                '</div>' +
+            html += '<div class="mision estado-' + m.estado + '" style="cursor:pointer;" onclick="abrirMision(\'' + m.id + '\')">' +
+                '<div class="mis-cab"><div class="mis-titulo">' + m.titulo + '</div><div class="mis-estado">' + estadoTxt + '</div></div>' +
                 '<div class="mis-desc">' + (m.descripcion || '') + '</div>' +
-                (m.requiere_evidencia
-                    ? '<div class="mis-evidencia">📸 Esta misión puede guardar una fotografía</div>'
-                    : '') +
-                '<div class="mis-pie">' +
-                  '<span class="mis-recompensa">🪙 ' + (m.recompensa || 0) + ' Berries</span>' +
-                  (m.fecha_completada
-                      ? '<span style="font-size:0.72rem;opacity:0.7;">✔ ' + m.fecha_completada + '</span>'
-                      : '') +
-                '</div>' +
-              '</div>';
+                (m.requiere_evidencia ? '<div class="mis-evidencia">📸 Esta misión puede guardar una fotografía</div>' : '') +
+                '<div class="mis-pie"><span class="mis-recompensa">🪙 ' + (m.recompensa || 0) + ' Berries</span>' +
+                (m.fecha_completada ? '<span style="font-size:0.72rem;opacity:0.7;">✔ ' + m.fecha_completada + '</span>' : '') +
+                '</div></div>';
           }
         });
       });
-
       cont.innerHTML = html;
     }
-    // Muestra el detalle informativo de una misión (solo lectura).
     function abrirMision(idMision) {
       const m = LISTA_MISIONES.find(function(x) { return x.id === idMision; });
       if (!m) return;
-
       const catInfo = CATEGORIAS_MIS.find(function(c) { return c.clave === m.categoria; });
       const catTxt = catInfo ? catInfo.titulo : m.categoria;
-
-      // Si está bloqueada: no revelar nada de su contenido.
       if (m.estado === 'bloqueada') {
-        mostrarModal(
-          '<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
+        mostrarModal('<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
           '<div style="font-size:0.75rem;letter-spacing:1.5px;text-transform:uppercase;color:#cbb489;margin-bottom:6px;">' + catTxt + '</div>' +
           '<h3>' + m.titulo + '</h3>' +
           '<div style="font-size:2rem;opacity:0.5;margin:10px 0;">&#9906;</div>' +
           '<p><em>Esta misión permanece sellada.</em></p>' +
           '<p style="opacity:0.8;">Su secreto se revelará cuando llegue su momento en la travesía.</p>' +
-          '<button class="modal-btn secundario" onclick="cerrarModal()">Entendido</button>'
-        );
+          '<button class="modal-btn secundario" onclick="cerrarModal()">Entendido</button>');
         return;
       }
-
-      // Misión desbloqueada: mostrar su detalle completo.
       const estadoTxt = ESTADO_MIS_TXT[m.estado] || m.estado;
-      mostrarModal(
-        '<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
+      mostrarModal('<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
         '<div style="font-size:0.75rem;letter-spacing:1.5px;text-transform:uppercase;color:#cbb489;margin-bottom:6px;">' + catTxt + '</div>' +
         '<h3>' + m.titulo + '</h3>' +
-        '<div style="font-size:0.8rem;color:#cbb489;margin-bottom:14px;">Estado: ' + estadoTxt +
-          (m.fecha_completada ? ' · ' + m.fecha_completada : '') + '</div>' +
+        '<div style="font-size:0.8rem;color:#cbb489;margin-bottom:14px;">Estado: ' + estadoTxt + (m.fecha_completada ? ' · ' + m.fecha_completada : '') + '</div>' +
         '<p>' + (m.descripcion || '') + '</p>' +
-        (m.requiere_evidencia
-            ? '<p style="font-size:0.82rem;color:#8fae8f;font-style:italic;">Esta misión puede guardar una fotografía como recuerdo.</p>'
-            : '') +
+        (m.requiere_evidencia ? '<p style="font-size:0.82rem;color:#8fae8f;font-style:italic;">Esta misión puede guardar una fotografía como recuerdo.</p>' : '') +
         '<div style="font-size:1.2rem;color:#e8c24a;font-weight:bold;margin:14px 0;">🪙 ' + (m.recompensa || 0) + ' Berries</div>' +
-        '<button class="modal-btn secundario" onclick="cerrarModal()">Cerrar</button>'
-      );
+        '<button class="modal-btn secundario" onclick="cerrarModal()">Cerrar</button>');
     }
 
-    // ==========================================================
-    //  INVENTARIO (cuadrícula tipo videojuego)
-    // ==========================================================
+    // ===== INVENTARIO =====
     let LISTA_INVENTARIO = [];
-
-    // Íconos temporales por objeto (se reemplazarán por imágenes reales
-    // en la fase de diseño). Por id, con un ícono por defecto.
-    const ICONOS_INV = {
-      'inv01': '👒', // sombrero
-      'inv02': '🧥', // ruana
-      'inv03': '🛂', // documento
-      'inv04': '🪪', // identificación
-      'inv05': '🥾', // calzado
-      'inv06': '❤️', // espíritu de aventura
-      'inv07': '❓'  // objeto desconocido
-    };
-
+    const ICONOS_INV = { 'inv01': '👒', 'inv02': '🧥', 'inv03': '🛂', 'inv04': '🪪', 'inv05': '🥾', 'inv06': '❤️', 'inv07': '❓' };
     function pintarInventario() {
       if (!LISTA_INVENTARIO.length) return;
-
       const equipo = LISTA_INVENTARIO.filter(function(o) { return o.categoria === 'equipo_inicial'; });
       const descubiertos = LISTA_INVENTARIO.filter(function(o) { return o.categoria === 'descubierto'; });
-
       document.getElementById('inv-equipo').innerHTML = equipo.map(slotHtml_).join('');
-
-      // La categoría "descubiertos" solo se muestra si hay objetos.
       const titDesc = document.getElementById('inv-descubiertos-tit');
       const contDesc = document.getElementById('inv-descubiertos');
       if (descubiertos.length > 0) {
@@ -1146,298 +547,179 @@
         contDesc.innerHTML = '';
       }
     }
-
-    // Genera el HTML de un slot del inventario.
     function slotHtml_(o) {
       const icono = ICONOS_INV[o.id] || (o.clasificado ? '❓' : '📦');
       const claseClasif = o.clasificado ? ' clasificado' : '';
       return '<div class="inv-slot' + claseClasif + '" onclick="abrirObjeto(\'' + o.id + '\')">' +
-               '<div class="inv-ic">' + icono + '</div>' +
-               '<div class="inv-nombre">' + o.nombre + '</div>' +
-             '</div>';
+               '<div class="inv-ic">' + icono + '</div><div class="inv-nombre">' + o.nombre + '</div></div>';
     }
-
-    // Abre el detalle de un objeto (o los datos clasificados si es secreto).
     function abrirObjeto(idObjeto) {
       const o = LISTA_INVENTARIO.find(function(x) { return x.id === idObjeto; });
       if (!o) return;
-
       if (o.clasificado) {
-        // OBJETO SECRETO: solo datos clasificados, nada real.
-        mostrarModal(
-          '<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
+        mostrarModal('<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
           '<div style="font-size:2.4rem;margin-bottom:6px;">&#10067;</div>' +
           '<h3>OBJETO DESCONOCIDO</h3>' +
           '<div style="text-align:left;font-size:0.9rem;line-height:2;margin:14px auto;max-width:260px;color:#cbb489;">' +
             'Función: <strong style="color:#8a8ab0;">CLASIFICADA</strong><br>' +
             'Origen: <strong style="color:#8a8ab0;">CLASIFICADO</strong><br>' +
             'Propósito: <strong style="color:#8a8ab0;">DESCONOCIDO</strong><br>' +
-            'Estado: <strong style="color:#8a8ab0;">EN POSESIÓN DE LA CAPITANA</strong>' +
-          '</div>' +
-          '<button class="modal-btn secundario" onclick="cerrarModal()">Cerrar</button>'
-        );
+            'Estado: <strong style="color:#8a8ab0;">EN POSESIÓN DE LA CAPITANA</strong></div>' +
+          '<button class="modal-btn secundario" onclick="cerrarModal()">Cerrar</button>');
         return;
       }
-
-      // Objeto normal.
       const icono = ICONOS_INV[o.id] || '📦';
-      mostrarModal(
-        '<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
+      mostrarModal('<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
         '<div style="font-size:2.4rem;margin-bottom:6px;">' + icono + '</div>' +
-        '<h3>' + o.nombre + '</h3>' +
-        '<p>' + (o.descripcion || '') + '</p>' +
+        '<h3>' + o.nombre + '</h3><p>' + (o.descripcion || '') + '</p>' +
         (o.contenido_secreto ? '<p style="color:#e8c24a;">' + o.contenido_secreto + '</p>' : '') +
-        '<button class="modal-btn secundario" onclick="cerrarModal()">Cerrar</button>'
-      );
+        '<button class="modal-btn secundario" onclick="cerrarModal()">Cerrar</button>');
     }
 
-    // ==========================================================
-    //  TESORO DE LA CAPITANA (mercado de recompensas)
-    // ==========================================================
+    // ===== TESORO =====
     let LISTA_RECOMPENSAS = [];
     let SALDO_ACTUAL = 0;
-
     function pintarTesoro() {
       const cont = document.getElementById('tesoro-lista');
       const saldoEl = document.getElementById('tesoro-saldo');
       if (!cont) return;
-
       saldoEl.textContent = '🪙 ' + SALDO_ACTUAL + ' Berries';
-
-      if (!LISTA_RECOMPENSAS.length) {
-        cont.innerHTML = '<div class="placeholder">El tesoro está vacío por ahora.</div>';
-        return;
-      }
-
+      if (!LISTA_RECOMPENSAS.length) { cont.innerHTML = '<div class="placeholder">El tesoro está vacío por ahora.</div>'; return; }
       let html = '';
       LISTA_RECOMPENSAS.forEach(function(r) {
         let accion = '';
-        if (r.estado === 'disponible') {
-          accion = '<button class="vale-btn" onclick="pedirCanje(\'' + r.id + '\')">Canjear</button>';
-        } else if (r.estado === 'sin_fondos') {
-          accion = '<span class="vale-faltan">Te faltan ' + r.faltan + ' 🪙</span>';
-        } else if (r.estado === 'canjeada') {
-          accion = '<span class="vale-canjeada-txt">Canjeada' + (r.fecha_canjeada ? ' · ' + r.fecha_canjeada : '') + '</span>';
-        } else if (r.estado === 'bloqueada') {
-          accion = '<span class="vale-faltan">Bloqueada</span>';
-        }
-
-        html +=
-          '<div class="vale estado-' + r.estado + '">' +
-            '<div class="vale-nombre">' + r.nombre + '</div>' +
+        if (r.estado === 'disponible') { accion = '<button class="vale-btn" onclick="pedirCanje(\'' + r.id + '\')">Canjear</button>'; }
+        else if (r.estado === 'sin_fondos') { accion = '<span class="vale-faltan">Te faltan ' + r.faltan + ' 🪙</span>'; }
+        else if (r.estado === 'canjeada') { accion = '<span class="vale-canjeada-txt">Canjeada' + (r.fecha_canjeada ? ' · ' + r.fecha_canjeada : '') + '</span>'; }
+        else if (r.estado === 'bloqueada') { accion = '<span class="vale-faltan">Bloqueada</span>'; }
+        html += '<div class="vale estado-' + r.estado + '"><div class="vale-nombre">' + r.nombre + '</div>' +
             '<div class="vale-desc">' + r.descripcion + '</div>' +
-            '<div class="vale-pie">' +
-              '<span class="vale-costo">🪙 ' + r.costo + '</span>' +
-              accion +
-            '</div>' +
-          '</div>';
+            '<div class="vale-pie"><span class="vale-costo">🪙 ' + r.costo + '</span>' + accion + '</div></div>';
       });
       cont.innerHTML = html;
     }
-
-    // Pide confirmación y canjea.
     let canjeando = false;
     function pedirCanje(idRecompensa) {
       const r = LISTA_RECOMPENSAS.find(function(x) { return x.id === idRecompensa; });
       if (!r) return;
-
-      mostrarModal(
-        '<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
-        '<h3>' + r.nombre + '</h3>' +
-        '<p>' + r.descripcion + '</p>' +
+      mostrarModal('<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
+        '<h3>' + r.nombre + '</h3><p>' + r.descripcion + '</p>' +
         '<div style="font-size:1.3rem;color:#e8c24a;font-weight:bold;margin:14px 0;">Cuesta 🪙 ' + r.costo + ' Berries</div>' +
         '<p style="font-size:0.85rem;opacity:0.8;">Te quedarán ' + (SALDO_ACTUAL - r.costo) + ' Berries.</p>' +
         '<button class="modal-btn" onclick="confirmarCanje(\'' + r.id + '\')">Canjear ahora</button>' +
-        '<button class="modal-btn secundario" onclick="cerrarModal()">Todavía no</button>'
-      );
+        '<button class="modal-btn secundario" onclick="cerrarModal()">Todavía no</button>');
     }
-
     function confirmarCanje(idRecompensa) {
       if (canjeando) return;
       canjeando = true;
       mostrarModal('<p style="padding:20px 0;"><em>Abriendo el cofre…</em></p>');
-
       fetch(URL_CEREBRO + '?accion=canjear&id=' + encodeURIComponent(idRecompensa))
         .then(function(r) { return r.json(); })
         .then(function(d) {
           canjeando = false;
-          if (d.ok) {
-            celebrarCanje(d);
-          } else {
-            mostrarModal(
-              '<h3>Un momento…</h3><p>' + (d.error || 'No se pudo canjear.') +
+          if (d.ok) { celebrarCanje(d); }
+          else {
+            mostrarModal('<h3>Un momento…</h3><p>' + (d.error || 'No se pudo canjear.') +
               (d.faltan ? ' Te faltan ' + d.faltan + ' Berries.' : '') + '</p>' +
-              '<button class="modal-btn secundario" onclick="cerrarModalYRefrescar()">Cerrar</button>'
-            );
+              '<button class="modal-btn secundario" onclick="cerrarModalYRefrescar()">Cerrar</button>');
           }
         })
         .catch(function() {
           canjeando = false;
-          mostrarModal(
-            '<h3>La brújula perdió la señal</h3><p>Intenta nuevamente.</p>' +
-            '<button class="modal-btn secundario" onclick="cerrarModal()">Cerrar</button>'
-          );
+          mostrarModal('<h3>La brújula perdió la señal</h3><p>Intenta nuevamente.</p>' +
+            '<button class="modal-btn secundario" onclick="cerrarModal()">Cerrar</button>');
         });
     }
-
     function celebrarCanje(d) {
-      mostrarModal(
-        '<div class="cel-titulo">¡Tesoro canjeado!</div>' +
+      mostrarModal('<div class="cel-titulo">¡Tesoro canjeado!</div>' +
         '<div class="cel-nombre">' + d.recompensa.nombre + '</div>' +
         '<div class="cel-real"><small>Disfrútalo, Capitana</small>' + d.recompensa.descripcion + '</div>' +
         '<div class="cel-berries">−' + d.recompensa.costo + ' Berries</div>' +
-        '<button class="modal-btn cel-boton" onclick="cerrarModalYRefrescar()">¡Reclamado!</button>'
-      );
+        '<button class="modal-btn cel-boton" onclick="cerrarModalYRefrescar()">¡Reclamado!</button>');
       lanzarDestellos();
     }
-
     function cerrarModalYRefrescar() {
       var destellos = document.getElementById('cel-destellos');
       if (destellos) destellos.innerHTML = '';
       cerrarModal();
-      cargarEstado();  // refresca saldo, tesoro y todo
+      cargarEstado();
     }
-    
-    // ==========================================================
-    //  VENTANA EMERGENTE DE TERRITORIO
-    // ==========================================================
 
-    // Abre la ventana según el estado del territorio tocado.
+    // ===== VENTANA DE TERRITORIO =====
     function abrirTerritorio(idTerritorio) {
       const info = ESTADOS_TERRITORIO[idTerritorio];
       if (!info) return;
-
       if (info.estado === 'bloqueado') {
-        mostrarModal(
-          '<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
-          '<h3>' + info.nombre_clave + '</h3>' +
-          '<p><em>Territorio por descubrir.</em></p>' +
+        mostrarModal('<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
+          '<h3>' + info.nombre_clave + '</h3><p><em>Territorio por descubrir.</em></p>' +
           '<p>Sigue la ruta, Capitana. Aún no es momento de llegar aquí.</p>' +
-          '<button class="modal-btn secundario" onclick="cerrarModal()">Entendido</button>'
-        );
+          '<button class="modal-btn secundario" onclick="cerrarModal()">Entendido</button>');
       } else if (info.estado === 'disponible') {
-        mostrarModal(
-          '<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
-          '<h3>' + info.nombre_clave + '</h3>' +
-          '<p><em>Territorio desconocido.</em></p>' +
+        mostrarModal('<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
+          '<h3>' + info.nombre_clave + '</h3><p><em>Territorio desconocido.</em></p>' +
           '<p style="margin-top:14px;font-size:1.05rem;">¿Hemos llegado a este territorio?</p>' +
           '<button class="modal-btn" onclick="confirmarLlegada(\'' + idTerritorio + '\')">Sí, hemos llegado</button>' +
-          '<button class="modal-btn secundario" onclick="cerrarModal()">Todavía no</button>'
-        );
+          '<button class="modal-btn secundario" onclick="cerrarModal()">Todavía no</button>');
       } else if (info.estado === 'descubierto') {
-        // Territorio ya conquistado: mostrar su información + curiosidades.
-        mostrarModal(
-          '<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
+        mostrarModal('<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
           '<h3>' + info.nombre_clave + '</h3>' +
           (info.nombre_real ? '<div class="real">' + info.nombre_real + '</div>' : '') +
-          (info.descripcion && info.descripcion.indexOf('PENDIENTE') === -1
-              ? '<p>' + info.descripcion + '</p>'
-              : '<p><em>Registro en preparación…</em></p>') +
+          (info.descripcion && info.descripcion.indexOf('PENDIENTE') === -1 ? '<p>' + info.descripcion + '</p>' : '<p><em>Registro en preparación…</em></p>') +
           construirCuriosidades_(info.curiosidades) +
-          '<button class="modal-btn secundario" onclick="cerrarModal()">Cerrar</button>'
-        );
+          '<button class="modal-btn secundario" onclick="cerrarModal()">Cerrar</button>');
       }
     }
-
-    // Construye el bloque desplegable de curiosidades ("Datos del territorio").
-    // Recibe el texto de curiosidades (una por renglón). Si no hay, no muestra nada.
     function construirCuriosidades_(texto) {
       if (!texto || !String(texto).trim()) return '';
-
-      // Separar por renglones y limpiar vacíos.
-      const items = String(texto).split('\n')
-        .map(function(s) { return s.trim(); })
-        .filter(function(s) { return s.length > 0; });
-
+      const items = String(texto).split('\n').map(function(s) { return s.trim(); }).filter(function(s) { return s.length > 0; });
       if (items.length === 0) return '';
-
-      let itemsHtml = items.map(function(c) {
-        return '<div class="curio-item">' + c + '</div>';
-      }).join('');
-
+      let itemsHtml = items.map(function(c) { return '<div class="curio-item">' + c + '</div>'; }).join('');
       return '<div class="curio-hook" onclick="toggleCuriosidades(this)">' +
                '<div class="curio-hook-txt">' +
                  '<div class="curio-hook-tit">🧭 Curiosidades del territorio</div>' +
                  '<div class="curio-hook-sub">Despliega para descubrir secretos y curiosidades de este territorio</div>' +
-               '</div>' +
-               '<div class="curio-flecha">&#9662;</div>' +
-             '</div>' +
+               '</div><div class="curio-flecha">&#9662;</div></div>' +
              '<div class="curio-contenido">' + itemsHtml + '</div>';
     }
-
-    // Abre/cierra el desplegable de curiosidades.
     function toggleCuriosidades(hook) {
       hook.classList.toggle('abierto');
       const contenido = hook.nextElementSibling;
       if (contenido) contenido.classList.toggle('abierto');
     }
-
-    // Llama al cerebro para descubrir, y muestra la celebración.
     let descubriendo = false;
     function confirmarLlegada(idTerritorio) {
-      if (descubriendo) return;   // evita doble toque
+      if (descubriendo) return;
       descubriendo = true;
-
-      // Estado "cargando" mientras el cerebro responde.
       mostrarModal('<p style="padding:20px 0;"><em>Desembarcando…</em></p>');
-
       fetch(URL_CEREBRO + '?accion=descubrir&id=' + encodeURIComponent(idTerritorio))
         .then(function(r) { return r.json(); })
         .then(function(d) {
           descubriendo = false;
-          if (d.ok) {
-            celebrarDescubrimiento(d);
-          } else if (d.ya) {
-            // Ya estaba descubierto: recargar estado y cerrar.
-            cargarEstado();
-            cerrarModal();
-          } else {
-            mostrarModal(
-              '<h3>Un momento…</h3><p>' + (d.error || 'No se pudo completar.') + '</p>' +
-              '<button class="modal-btn secundario" onclick="cerrarModal()">Cerrar</button>'
-            );
+          if (d.ok) { celebrarDescubrimiento(d); }
+          else if (d.ya) { cargarEstado(); cerrarModal(); }
+          else {
+            mostrarModal('<h3>Un momento…</h3><p>' + (d.error || 'No se pudo completar.') + '</p>' +
+              '<button class="modal-btn secundario" onclick="cerrarModal()">Cerrar</button>');
           }
         })
         .catch(function() {
           descubriendo = false;
-          mostrarModal(
-            '<h3>La brújula perdió la señal</h3>' +
-            '<p>Intenta nuevamente en un momento.</p>' +
-            '<button class="modal-btn secundario" onclick="cerrarModal()">Cerrar</button>'
-          );
+          mostrarModal('<h3>La brújula perdió la señal</h3><p>Intenta nuevamente en un momento.</p>' +
+            '<button class="modal-btn secundario" onclick="cerrarModal()">Cerrar</button>');
         });
     }
-
-    // Muestra la celebración del descubrimiento (elegante, con revelación
-    // en secuencia y lluvia de destellos dorados).
     function celebrarDescubrimiento(d) {
       const t = d.territorio;
-      const realHtml = t.nombre_real
-        ? '<div class="cel-real"><small>También conocido como</small>' + t.nombre_real + '</div>'
-        : '';
-
-      // Recordar cuál territorio se acaba de descubrir (para abrir su registro).
+      const realHtml = t.nombre_real ? '<div class="cel-real"><small>También conocido como</small>' + t.nombre_real + '</div>' : '';
       TERRITORIO_RECIEN_DESCUBIERTO = t.id;
-
-      mostrarModal(
-        '<div class="cel-titulo">¡Territorio descubierto!</div>' +
-        '<div class="cel-nombre">' + t.nombre_clave + '</div>' +
-        realHtml +
+      mostrarModal('<div class="cel-titulo">¡Territorio descubierto!</div>' +
+        '<div class="cel-nombre">' + t.nombre_clave + '</div>' + realHtml +
         '<div class="cel-berries" id="cel-contador">+0 Berries</div>' +
         '<div class="cel-frase">Nuevas tierras, mismos sueños…</div>' +
-        '<button class="modal-btn cel-boton" onclick="verRegistroDescubierto()">Ver el registro del lugar</button>'
-      );
-
-      // Lluvia de destellos.
+        '<button class="modal-btn cel-boton" onclick="verRegistroDescubierto()">Ver el registro del lugar</button>');
       lanzarDestellos();
-
-      // Conteo animado de los Berries (arranca tras la revelación).
-      setTimeout(function() {
-        animarContador(d.berries_ganados);
-      }, 1800);
+      setTimeout(function() { animarContador(d.berries_ganados); }, 1800);
     }
-
-    // Anima el contador de Berries de 0 al total.
     function animarContador(total) {
       const el = document.getElementById('cel-contador');
       if (!el) return;
@@ -1450,8 +732,6 @@
         el.textContent = '+' + actual + ' Berries';
       }, 28);
     }
-
-    // Genera la lluvia de destellos dorados.
     function lanzarDestellos() {
       const cont = document.getElementById('cel-destellos');
       if (!cont) return;
@@ -1461,7 +741,7 @@
         const d = document.createElement('div');
         d.className = 'destello';
         d.style.left = Math.random() * 100 + 'vw';
-        const dur = 2.4 + Math.random() * 2.2;      // 2.4s a 4.6s
+        const dur = 2.4 + Math.random() * 2.2;
         const retraso = Math.random() * 1.5;
         const tam = 6 + Math.random() * 10;
         d.style.width = tam + 'px';
@@ -1470,147 +750,89 @@
         d.style.animationDelay = retraso + 's';
         cont.appendChild(d);
       }
-      // Limpiar después de que caigan todos.
       setTimeout(function() { cont.innerHTML = ''; }, 6500);
     }
-
-    // Guarda cuál territorio se acaba de descubrir.
     let TERRITORIO_RECIEN_DESCUBIERTO = null;
-
-    // Al pulsar "Ver el registro": refresca los datos y abre la ventana
-    // del territorio recién descubierto (con descripción + curiosidades).
     function verRegistroDescubierto() {
       var destellos = document.getElementById('cel-destellos');
       if (destellos) destellos.innerHTML = '';
-
       const id = TERRITORIO_RECIEN_DESCUBIERTO;
-      // Refrescar el estado del juego; cuando llegue, abrir el registro.
       fetch(URL_CEREBRO + '?accion=estado')
         .then(function(r) { return r.json(); })
         .then(function(d) {
           if (d.ok) pintarEstado(d.estado);
-          // Abrir la ventana del territorio ya con sus datos frescos.
-          if (id && ESTADOS_TERRITORIO[id]) {
-            abrirTerritorio(id);
-          } else {
-            cerrarModal();
-          }
+          if (id && ESTADOS_TERRITORIO[id]) { abrirTerritorio(id); }
+          else { cerrarModal(); }
         })
         .catch(function() { cerrarModal(); });
     }
-    
-    // Cierra la celebración y refresca todo (mapa + inicio).
     function cerrarCelebracion() {
       var destellos = document.getElementById('cel-destellos');
       if (destellos) destellos.innerHTML = '';
       cerrarModal();
-      cargarEstado();  // actualiza saldo, progreso y estados de marcadores
+      cargarEstado();
     }
 
-    // -------- Utilidades del modal --------
+    // ===== MODAL UTILIDADES =====
     let modalListoParaCerrar = false;
     function mostrarModal(html) {
       document.getElementById('modal-contenido').innerHTML = html;
       const fondo = document.getElementById('modal-fondo');
       fondo.classList.add('abierto');
-      // Bloquear el cierre por toque durante un instante (evita el "ghost click"
-      // que en móvil cerraría el modal apenas se abre).
       modalListoParaCerrar = false;
       setTimeout(function() { modalListoParaCerrar = true; }, 350);
     }
-    function cerrarModal() {
-      document.getElementById('modal-fondo').classList.remove('abierto');
-    }
+    function cerrarModal() { document.getElementById('modal-fondo').classList.remove('abierto'); }
     function cerrarModalSiFondo(ev) {
-      // No cerrar si el modal acaba de abrirse (protege del "ghost click").
       if (!modalListoParaCerrar) return;
-      // Cierra solo si se toca el fondo oscuro, no la caja.
       if (ev.target.id === 'modal-fondo') cerrarModal();
     }
 
-    // ==========================================================
-    //  MODO PRIMER OFICIAL — acceso secreto y login
-    // ==========================================================
-
-    // El token vive solo en memoria (no se guarda permanente).
+    // ===== MODO PRIMER OFICIAL: LOGIN =====
     let adminToken = null;
-
-    // --- Detección de los 5 toques secretos en el emblema ---
     let toquesEmblema = 0;
     let toquesTimer = null;
     function registrarToqueEmblema() {
       toquesEmblema++;
       if (toquesTimer) clearTimeout(toquesTimer);
-      // Si pasan 1.5s sin tocar, se reinicia el conteo.
       toquesTimer = setTimeout(function() { toquesEmblema = 0; }, 1500);
-
-      if (toquesEmblema >= 5) {
-        toquesEmblema = 0;
-        abrirAdmin();
-      }
+      if (toquesEmblema >= 5) { toquesEmblema = 0; abrirAdmin(); }
     }
-
-    // --- Abrir / cerrar el panel ---
     function abrirAdmin() {
-      // Mostrar login o panel según si ya hay sesión.
       document.getElementById('admin-error').textContent = '';
       document.getElementById('admin-clave').value = '';
-      if (adminToken) {
-        mostrarPanelAdmin();
-      } else {
+      if (adminToken) { mostrarPanelAdmin(); }
+      else {
         document.getElementById('admin-login').style.display = 'block';
         document.getElementById('admin-panel').style.display = 'none';
       }
       document.getElementById('admin-fondo').classList.add('abierto');
     }
-    function cerrarAdmin() {
-      document.getElementById('admin-fondo').classList.remove('abierto');
-    }
-
-    // --- Intentar iniciar sesión ---
+    function cerrarAdmin() { document.getElementById('admin-fondo').classList.remove('abierto'); }
     function intentarLogin() {
       const clave = document.getElementById('admin-clave').value;
       const errorEl = document.getElementById('admin-error');
       errorEl.textContent = 'Verificando…';
-
       fetch(URL_CEREBRO + '?accion=login&clave=' + encodeURIComponent(clave))
         .then(function(r) { return r.json(); })
         .then(function(d) {
-          if (d.ok) {
-            adminToken = d.token;
-            errorEl.textContent = '';
-            mostrarPanelAdmin();
-          } else {
-            errorEl.textContent = '❌ ' + (d.error || 'Acceso denegado.');
-          }
+          if (d.ok) { adminToken = d.token; errorEl.textContent = ''; mostrarPanelAdmin(); }
+          else { errorEl.textContent = '❌ ' + (d.error || 'Acceso denegado.'); }
         })
-        .catch(function() {
-          errorEl.textContent = 'La brújula perdió la señal. Intenta de nuevo.';
-        });
+        .catch(function() { errorEl.textContent = 'La brújula perdió la señal. Intenta de nuevo.'; });
     }
-
-    // --- Mostrar el panel una vez autenticado ---
     function mostrarPanelAdmin() {
       document.getElementById('admin-login').style.display = 'none';
       document.getElementById('admin-panel').style.display = 'block';
-      // Cargar la lista de territorios en el selector del editor.
       adminCargarListaTerritorios();
     }
-
-    // --- Cerrar sesión ---
     function logoutAdmin() {
-      if (adminToken) {
-        fetch(URL_CEREBRO + '?accion=logout&token=' + encodeURIComponent(adminToken));
-      }
+      if (adminToken) { fetch(URL_CEREBRO + '?accion=logout&token=' + encodeURIComponent(adminToken)); }
       adminToken = null;
       cerrarAdmin();
     }
 
-    // ==========================================================
-    //  HERRAMIENTAS DEL PANEL (usan el token)
-    // ==========================================================
-
-    // --- Diagnóstico ---
+    // ===== HERRAMIENTAS DEL PANEL =====
     function adminVerDiagnostico() {
       const el = document.getElementById('admin-diag');
       el.textContent = 'Consultando…';
@@ -1619,101 +841,60 @@
         .then(function(d) {
           if (d.ok) {
             const g = d.diagnostico;
-            el.textContent =
-              'Territorios: ' + g.territorios_descubiertos + ' / ' + g.territorios_total + '\n' +
-              'Saldo: ' + g.saldo + ' Berries\n' +
-              'Ganado: ' + g.total_ganado + '  ·  Gastado: ' + g.total_gastado;
-          } else {
-            el.textContent = d.error || 'Error.';
-            manejarSesionExpirada(d);
-          }
+            el.textContent = 'Territorios: ' + g.territorios_descubiertos + ' / ' + g.territorios_total + '\n' +
+              'Saldo: ' + g.saldo + ' Berries\n' + 'Ganado: ' + g.total_ganado + '  ·  Gastado: ' + g.total_gastado;
+          } else { el.textContent = d.error || 'Error.'; manejarSesionExpirada(d); }
         })
         .catch(function() { el.textContent = 'Sin señal.'; });
     }
-
-    // --- Ajustar Berries (sumar / restar) ---
     function adminSumarBerries() {
       const monto = document.getElementById('admin-monto').value;
       if (!monto) return;
-      fetch(URL_CEREBRO + '?accion=admin_berries&token=' + encodeURIComponent(adminToken) +
-            '&monto=' + encodeURIComponent(monto))
+      fetch(URL_CEREBRO + '?accion=admin_berries&token=' + encodeURIComponent(adminToken) + '&monto=' + encodeURIComponent(monto))
         .then(function(r) { return r.json(); })
         .then(function(d) {
-          if (d.ok) {
-            document.getElementById('admin-monto').value = '';
-            adminVerDiagnostico();
-            cargarEstado(); // refresca el saldo en el Inicio
-          } else {
-            alert(d.error || 'No se pudo ajustar.');
-            manejarSesionExpirada(d);
-          }
+          if (d.ok) { document.getElementById('admin-monto').value = ''; adminVerDiagnostico(); cargarEstado(); }
+          else { alert(d.error || 'No se pudo ajustar.'); manejarSesionExpirada(d); }
         })
         .catch(function() { alert('Sin señal.'); });
     }
-
-    // --- Fijar saldo exacto ---
     function adminFijarSaldo() {
       const saldo = document.getElementById('admin-saldo').value;
       if (saldo === '') return;
-      fetch(URL_CEREBRO + '?accion=admin_fijar_saldo&token=' + encodeURIComponent(adminToken) +
-            '&saldo=' + encodeURIComponent(saldo))
+      fetch(URL_CEREBRO + '?accion=admin_fijar_saldo&token=' + encodeURIComponent(adminToken) + '&saldo=' + encodeURIComponent(saldo))
         .then(function(r) { return r.json(); })
         .then(function(d) {
-          if (d.ok) {
-            document.getElementById('admin-saldo').value = '';
-            adminVerDiagnostico();
-            cargarEstado(); // refresca el saldo en el Inicio
-          } else {
-            alert(d.error || 'No se pudo fijar el saldo.');
-            manejarSesionExpirada(d);
-          }
+          if (d.ok) { document.getElementById('admin-saldo').value = ''; adminVerDiagnostico(); cargarEstado(); }
+          else { alert(d.error || 'No se pudo fijar el saldo.'); manejarSesionExpirada(d); }
         })
         .catch(function() { alert('Sin señal.'); });
     }
-
-    // --- Deshacer el último descubrimiento (con confirmación) ---
     function adminDeshacerDescubrimiento() {
       const seguro = confirm('¿Deshacer el último territorio descubierto?\n\nVolverá a estar disponible, su misión se bloqueará de nuevo y se le quitarán a la Capitana los Berries que dio.');
       if (!seguro) return;
-
       fetch(URL_CEREBRO + '?accion=admin_deshacer_descubrimiento&token=' + encodeURIComponent(adminToken))
         .then(function(r) { return r.json(); })
         .then(function(d) {
           if (d.ok) {
             alert('✔ ' + d.mensaje + '\n\nBerries revertidos: ' + d.berries_revertidos + '\nSaldo actual: ' + d.saldo_actual);
-            adminVerDiagnostico();
-            cargarEstado(); // refresca mapa, inicio, todo
-          } else {
-            alert(d.error || 'No se pudo deshacer.');
-            manejarSesionExpirada(d);
-          }
+            adminVerDiagnostico(); cargarEstado();
+          } else { alert(d.error || 'No se pudo deshacer.'); manejarSesionExpirada(d); }
         })
         .catch(function() { alert('Sin señal.'); });
     }
-    
-    // --- Resetear progreso (con doble confirmación) ---
     function adminPedirReset() {
       const seguro = confirm('¿Seguro que quieres RESETEAR el progreso?\n\nEsto borra territorios, misiones, Berries y canjes. La bitácora se conserva.\n\nEsta acción no se puede deshacer.');
       if (!seguro) return;
       const seguro2 = confirm('Última confirmación: ¿resetear la aventura a cero?');
       if (!seguro2) return;
-
       fetch(URL_CEREBRO + '?accion=admin_reset&token=' + encodeURIComponent(adminToken))
         .then(function(r) { return r.json(); })
         .then(function(d) {
-          if (d.ok) {
-            alert('✔ ' + d.mensaje);
-            adminVerDiagnostico();
-            cargarEstado(); // refresca todo (Inicio + mapa)
-          } else {
-            alert(d.error || 'No se pudo resetear.');
-            manejarSesionExpirada(d);
-          }
+          if (d.ok) { alert('✔ ' + d.mensaje); adminVerDiagnostico(); cargarEstado(); }
+          else { alert(d.error || 'No se pudo resetear.'); manejarSesionExpirada(d); }
         })
         .catch(function() { alert('Sin señal.'); });
     }
-
-    // --- Si la sesión expiró, cerrar el panel y pedir clave de nuevo ---
     function manejarSesionExpirada(d) {
       if (d && d.error && d.error.indexOf('Sesión') !== -1) {
         adminToken = null;
@@ -1721,8 +902,6 @@
         cerrarAdmin();
       }
     }
-
-    // --- Reabrir recompensas ---
     function adminCargarRecompensas() {
       const el = document.getElementById('admin-recompensas');
       el.textContent = 'Consultando…';
@@ -1733,44 +912,26 @@
           let html = '';
           d.recompensas.forEach(function(r) {
             const canjeada = (r.estado === 'canjeada');
-            html +=
-              '<div class="admin-rew-item">' +
-                '<div>' +
-                  '<div class="admin-rew-nombre">' + r.nombre + '</div>' +
-                  '<div class="admin-rew-estado">' + r.estado +
-                    (r.fecha_canjeada ? ' · ' + r.fecha_canjeada : '') + '</div>' +
-                '</div>' +
-                (canjeada
-                    ? '<button class="admin-rew-btn" onclick="adminReabrir(\'' + r.id + '\')">Reabrir</button>'
-                    : '<span class="admin-rew-estado">—</span>') +
+            html += '<div class="admin-rew-item"><div><div class="admin-rew-nombre">' + r.nombre + '</div>' +
+                '<div class="admin-rew-estado">' + r.estado + (r.fecha_canjeada ? ' · ' + r.fecha_canjeada : '') + '</div></div>' +
+                (canjeada ? '<button class="admin-rew-btn" onclick="adminReabrir(\'' + r.id + '\')">Reabrir</button>' : '<span class="admin-rew-estado">—</span>') +
               '</div>';
           });
           el.innerHTML = html;
         })
         .catch(function() { el.textContent = 'Sin señal.'; });
     }
-
     function adminReabrir(idRecompensa) {
-      fetch(URL_CEREBRO + '?accion=admin_reabrir_recompensa&token=' + encodeURIComponent(adminToken) +
-            '&id=' + encodeURIComponent(idRecompensa))
+      fetch(URL_CEREBRO + '?accion=admin_reabrir_recompensa&token=' + encodeURIComponent(adminToken) + '&id=' + encodeURIComponent(idRecompensa))
         .then(function(r) { return r.json(); })
         .then(function(d) {
-          if (d.ok) {
-            adminCargarRecompensas(); // refresca la lista del panel
-            cargarEstado();           // refresca el Tesoro de Karen
-          } else {
-            alert(d.error || 'No se pudo reabrir.');
-            manejarSesionExpirada(d);
-          }
+          if (d.ok) { adminCargarRecompensas(); cargarEstado(); }
+          else { alert(d.error || 'No se pudo reabrir.'); manejarSesionExpirada(d); }
         })
         .catch(function() { alert('Sin señal.'); });
-    }    
+    }
 
-    // ==========================================================
-    //  EDITOR DE TERRITORIOS (panel)
-    // ==========================================================
-
-    // Llenar el selector de territorios al entrar al panel.
+    // ===== EDITOR DE TERRITORIOS =====
     function adminCargarListaTerritorios() {
       fetch(URL_CEREBRO + '?accion=admin_listar_territorios&token=' + encodeURIComponent(adminToken))
         .then(function(r) { return r.json(); })
@@ -1779,50 +940,39 @@
           const sel = document.getElementById('admin-terr-select');
           let html = '<option value="">— Selecciona —</option>';
           d.territorios.forEach(function(t) {
-            html += '<option value="' + t.id + '">' + t.orden + '. ' + t.nombre_clave +
-                    (t.pendiente ? ' (pendiente)' : '') + '</option>';
+            html += '<option value="' + t.id + '">' + t.orden + '. ' + t.nombre_clave + (t.pendiente ? ' (pendiente)' : '') + '</option>';
           });
           sel.innerHTML = html;
         })
         .catch(function() {});
     }
-
-    // Cargar los datos del territorio elegido en el formulario.
     function adminCargarTerritorio() {
       const id = document.getElementById('admin-terr-select').value;
       const form = document.getElementById('admin-terr-form');
       if (!id) { form.style.display = 'none'; return; }
-
-      fetch(URL_CEREBRO + '?accion=admin_leer_territorio&token=' + encodeURIComponent(adminToken) +
-            '&id=' + encodeURIComponent(id))
+      fetch(URL_CEREBRO + '?accion=admin_leer_territorio&token=' + encodeURIComponent(adminToken) + '&id=' + encodeURIComponent(id))
         .then(function(r) { return r.json(); })
         .then(function(d) {
           if (!d.ok) { manejarSesionExpirada(d); return; }
           const t = d.territorio;
-          // Si la descripción es el marcador PENDIENTE, mostrar vacío.
           const desc = (String(t.descripcion).indexOf('PENDIENTE') !== -1) ? '' : t.descripcion;
-
           document.getElementById('terr-clave').value = t.nombre_clave || '';
           document.getElementById('terr-real').value = t.nombre_real || '';
           document.getElementById('terr-sub').value = t.subtitulo || '';
           document.getElementById('terr-desc').value = desc;
           document.getElementById('terr-curio').value = t.curiosidades || '';
           document.getElementById('terr-rec').value = t.recompensa || 0;
-          document.getElementById('terr-sugerencia').textContent =
-            '💡 Sugerencia del sistema: ' + d.sugerencia_berries + ' Berries (equilibrio económico)';
+          document.getElementById('terr-sugerencia').textContent = '💡 Sugerencia del sistema: ' + d.sugerencia_berries + ' Berries (equilibrio económico)';
           document.getElementById('terr-msg').textContent = '';
           form.style.display = 'block';
           form.setAttribute('data-id', id);
         })
         .catch(function() {});
     }
-
-    // Guardar los cambios del territorio.
     function adminGuardarTerritorio() {
       const form = document.getElementById('admin-terr-form');
       const id = form.getAttribute('data-id');
       if (!id) return;
-
       const datos = {
         id: id,
         nombre_clave: document.getElementById('terr-clave').value,
@@ -1832,31 +982,19 @@
         curiosidades: document.getElementById('terr-curio').value,
         recompensa: document.getElementById('terr-rec').value
       };
-
       const msg = document.getElementById('terr-msg');
       msg.textContent = 'Guardando…';
-
-      fetch(URL_CEREBRO + '?accion=admin_guardar_territorio&token=' + encodeURIComponent(adminToken) +
-            '&datos=' + encodeURIComponent(JSON.stringify(datos)))
+      fetch(URL_CEREBRO + '?accion=admin_guardar_territorio&token=' + encodeURIComponent(adminToken) + '&datos=' + encodeURIComponent(JSON.stringify(datos)))
         .then(function(r) { return r.json(); })
         .then(function(d) {
-          if (d.ok) {
-            msg.textContent = '✔ ' + d.mensaje;
-            adminCargarListaTerritorios(); // refresca marcas de pendiente
-            cargarEstado();                // refresca la app de Karen
-          } else {
-            msg.textContent = d.error || 'No se pudo guardar.';
-            manejarSesionExpirada(d);
-          }
+          if (d.ok) { msg.textContent = '✔ ' + d.mensaje; adminCargarListaTerritorios(); cargarEstado(); }
+          else { msg.textContent = d.error || 'No se pudo guardar.'; manejarSesionExpirada(d); }
         })
         .catch(function() { msg.textContent = 'Sin señal.'; });
     }
 
-    // ==========================================================
-    //  EDITOR DE RECOMPENSAS (panel)
-    // ==========================================================
-    let REW_EDITANDO = null; // id de la recompensa que se edita (null = nueva)
-
+    // ===== EDITOR DE RECOMPENSAS =====
+    let REW_EDITANDO = null;
     function adminCargarRecompensasFull() {
       const cont = document.getElementById('admin-rew-lista');
       cont.textContent = 'Consultando…';
@@ -1864,34 +1002,23 @@
         .then(function(r) { return r.json(); })
         .then(function(d) {
           if (!d.ok) { cont.textContent = d.error || 'Error.'; manejarSesionExpirada(d); return; }
-
-          // Semáforo de economía.
           const eco = d.economia;
           const ecoEl = document.getElementById('admin-economia');
           ecoEl.className = 'admin-economia ' + (eco.balanceada ? 'ok' : 'mal');
-          ecoEl.innerHTML =
-            (eco.balanceada ? '✅ Economía balanceada' : '⚠️ Economía sin balancear') + '<br>' +
+          ecoEl.innerHTML = (eco.balanceada ? '✅ Economía balanceada' : '⚠️ Economía sin balancear') + '<br>' +
             'Garantizados: ' + eco.berries_garantizados + ' 🪙 · Recompensas base: ' + eco.costo_recompensas_base + ' 🪙<br>' +
             'Margen: ' + (eco.diferencia >= 0 ? '+' : '') + eco.diferencia + ' 🪙';
-
-          // Lista de recompensas.
           let html = '';
           d.recompensas.forEach(function(r) {
-            html +=
-              '<div class="admin-rew-edit' + (r.activo ? '' : ' admin-rew-inactiva') + '">' +
-                '<div>' +
-                  '<div class="admin-rew-nombre">' + r.nombre + (r.activo ? '' : ' (oculta)') + '</div>' +
-                  '<div class="admin-rew-estado">' + r.costo + ' 🪙 · ' + r.categoria + '</div>' +
-                '</div>' +
-                '<button class="admin-rew-edit-btn" onclick="adminEditarRew(\'' + r.id + '\')">Editar</button>' +
-              '</div>';
+            html += '<div class="admin-rew-edit' + (r.activo ? '' : ' admin-rew-inactiva') + '"><div>' +
+                '<div class="admin-rew-nombre">' + r.nombre + (r.activo ? '' : ' (oculta)') + '</div>' +
+                '<div class="admin-rew-estado">' + r.costo + ' 🪙 · ' + r.categoria + '</div></div>' +
+                '<button class="admin-rew-edit-btn" onclick="adminEditarRew(\'' + r.id + '\')">Editar</button></div>';
           });
           cont.innerHTML = html;
         })
         .catch(function() { cont.textContent = 'Sin señal.'; });
     }
-
-    // Preparar formulario para NUEVA recompensa.
     function adminNuevaRecompensa() {
       REW_EDITANDO = null;
       document.getElementById('admin-rew-form-tit').textContent = 'Nueva recompensa';
@@ -1903,10 +1030,7 @@
       document.getElementById('rew-msg').textContent = '';
       document.getElementById('admin-rew-form').style.display = 'block';
     }
-
-    // Preparar formulario para EDITAR una recompensa existente.
     function adminEditarRew(id) {
-      // Buscar los datos actuales en la lista ya cargada.
       fetch(URL_CEREBRO + '?accion=admin_recompensas_full&token=' + encodeURIComponent(adminToken))
         .then(function(r) { return r.json(); })
         .then(function(d) {
@@ -1924,13 +1048,10 @@
           document.getElementById('admin-rew-form').style.display = 'block';
         });
     }
-
     function adminCancelarRewForm() {
       document.getElementById('admin-rew-form').style.display = 'none';
       REW_EDITANDO = null;
     }
-
-    // Guardar (crear o editar según REW_EDITANDO).
     function adminGuardarRecompensa() {
       const datos = {
         nombre: document.getElementById('rew-nombre').value,
@@ -1942,64 +1063,122 @@
       const msg = document.getElementById('rew-msg');
       if (!datos.nombre) { msg.textContent = 'Ponle un nombre.'; return; }
       msg.textContent = 'Guardando…';
-
-      let accion, cuerpo;
-      if (REW_EDITANDO) {
-        datos.id = REW_EDITANDO;
-        accion = 'admin_editar_recompensa';
-      } else {
-        accion = 'admin_crear_recompensa';
-      }
-
-      fetch(URL_CEREBRO + '?accion=' + accion + '&token=' + encodeURIComponent(adminToken) +
-            '&datos=' + encodeURIComponent(JSON.stringify(datos)))
+      let accion;
+      if (REW_EDITANDO) { datos.id = REW_EDITANDO; accion = 'admin_editar_recompensa'; }
+      else { accion = 'admin_crear_recompensa'; }
+      fetch(URL_CEREBRO + '?accion=' + accion + '&token=' + encodeURIComponent(adminToken) + '&datos=' + encodeURIComponent(JSON.stringify(datos)))
         .then(function(r) { return r.json(); })
         .then(function(d) {
-          if (d.ok) {
-            msg.textContent = '✔ ' + d.mensaje;
-            adminCargarRecompensasFull();     // refresca lista + economía
-            cargarEstado();                    // refresca el Tesoro de Karen
-            setTimeout(adminCancelarRewForm, 800);
-          } else {
-            msg.textContent = d.error || 'No se pudo guardar.';
-            manejarSesionExpirada(d);
-          }
+          if (d.ok) { msg.textContent = '✔ ' + d.mensaje; adminCargarRecompensasFull(); cargarEstado(); setTimeout(adminCancelarRewForm, 800); }
+          else { msg.textContent = d.error || 'No se pudo guardar.'; manejarSesionExpirada(d); }
         })
         .catch(function() { msg.textContent = 'Sin señal.'; });
     }
-    
-    // ==========================================================
-    //  CARGA INICIAL Y ACTIVACIÓN DEL ACCESO SECRETO
-    // ==========================================================
 
-    // -------- Cargar el estado del juego al abrir la app --------
+    // ===== EDITOR DE MISIONES =====
+    let MIS_EDITANDO = null;
+    const CAT_MIS_TXT = { 'principal': 'Principal', 'exploracion': 'Exploración', 'memoria': 'Memoria' };
+    function adminCargarMisionesFull() {
+      const cont = document.getElementById('admin-mis-lista');
+      cont.textContent = 'Consultando…';
+      fetch(URL_CEREBRO + '?accion=admin_misiones_full&token=' + encodeURIComponent(adminToken))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (!d.ok) { cont.textContent = d.error || 'Error.'; manejarSesionExpirada(d); return; }
+          let html = '';
+          d.misiones.forEach(function(m) {
+            html += '<div class="admin-rew-edit"><div><div class="admin-rew-nombre">' + m.titulo + '</div>' +
+                '<div class="admin-rew-estado">' + (CAT_MIS_TXT[m.categoria] || m.categoria) + ' · ' + m.recompensa + ' 🪙 · ' + m.estado + '</div></div>' +
+                '<button class="admin-rew-edit-btn" onclick="adminEditarMis(\'' + m.id + '\')">Editar</button></div>';
+          });
+          cont.innerHTML = html;
+        })
+        .catch(function() { cont.textContent = 'Sin señal.'; });
+    }
+    function adminNuevaMision() {
+      MIS_EDITANDO = null;
+      document.getElementById('admin-mis-form-tit').textContent = 'Nueva misión';
+      document.getElementById('mis-titulo').value = '';
+      document.getElementById('mis-desc').value = '';
+      const catSel = document.getElementById('mis-cat');
+      catSel.innerHTML = '<option value="memoria">Memoria (TikToks, recuerdos)</option><option value="exploracion">Exploración</option>';
+      catSel.disabled = false;
+      catSel.value = 'memoria';
+      document.getElementById('mis-rec').value = '';
+      document.getElementById('mis-evidencia').checked = false;
+      document.getElementById('mis-msg').textContent = '';
+      document.getElementById('admin-mis-form').style.display = 'block';
+    }
+    function adminEditarMis(id) {
+      fetch(URL_CEREBRO + '?accion=admin_misiones_full&token=' + encodeURIComponent(adminToken))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (!d.ok) { manejarSesionExpirada(d); return; }
+          const m = d.misiones.find(function(x) { return x.id === id; });
+          if (!m) return;
+          MIS_EDITANDO = id;
+          document.getElementById('admin-mis-form-tit').textContent = 'Editar: ' + m.titulo;
+          document.getElementById('mis-titulo').value = m.titulo;
+          document.getElementById('mis-desc').value = m.descripcion || '';
+          const catSel = document.getElementById('mis-cat');
+          if (m.categoria === 'principal') {
+            catSel.innerHTML = '<option value="principal">Principal</option>';
+            catSel.disabled = true;
+          } else {
+            catSel.innerHTML = '<option value="memoria">Memoria (TikToks, recuerdos)</option><option value="exploracion">Exploración</option>';
+            catSel.disabled = false;
+            catSel.value = m.categoria;
+          }
+          document.getElementById('mis-rec').value = m.recompensa;
+          document.getElementById('mis-evidencia').checked = m.requiere_evidencia;
+          document.getElementById('mis-msg').textContent = '';
+          document.getElementById('admin-mis-form').style.display = 'block';
+        });
+    }
+    function adminCancelarMisForm() {
+      document.getElementById('admin-mis-form').style.display = 'none';
+      MIS_EDITANDO = null;
+    }
+    function adminGuardarMision() {
+      const datos = {
+        titulo: document.getElementById('mis-titulo').value,
+        descripcion: document.getElementById('mis-desc').value,
+        categoria: document.getElementById('mis-cat').value,
+        recompensa: document.getElementById('mis-rec').value,
+        requiere_evidencia: document.getElementById('mis-evidencia').checked
+      };
+      const msg = document.getElementById('mis-msg');
+      if (!datos.titulo) { msg.textContent = 'Ponle un título.'; return; }
+      msg.textContent = 'Guardando…';
+      let accion;
+      if (MIS_EDITANDO) { datos.id = MIS_EDITANDO; accion = 'admin_editar_mision'; }
+      else { accion = 'admin_crear_mision'; }
+      fetch(URL_CEREBRO + '?accion=' + accion + '&token=' + encodeURIComponent(adminToken) + '&datos=' + encodeURIComponent(JSON.stringify(datos)))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.ok) { msg.textContent = '✔ ' + d.mensaje; adminCargarMisionesFull(); cargarEstado(); setTimeout(adminCancelarMisForm, 800); }
+          else { msg.textContent = d.error || 'No se pudo guardar.'; manejarSesionExpirada(d); }
+        })
+        .catch(function() { msg.textContent = 'Sin señal.'; });
+    }
+
+    // ===== CARGA INICIAL Y ACCESO SECRETO =====
     function cargarEstado() {
       fetch(URL_CEREBRO + '?accion=estado')
         .then(function(r) { return r.json(); })
         .then(function(d) {
-          if (d.ok) { pintarEstado(d.estado); }
-          else { mostrarError(); }
+          if (d.ok) { pintarEstado(d.estado); } else { mostrarError(); }
         })
         .catch(function() { mostrarError(); });
     }
-
-    // Iniciar la carga en cuanto la página esté lista.
     cargarEstado();
-
-    // Activar el acceso secreto (5 toques en el emblema).
     (function() {
       var emblema = document.getElementById('emblema');
       if (emblema) emblema.addEventListener('click', registrarToqueEmblema);
     })();
 
-    // ==========================================================
-    //  MOTOR DEL MAPA INTERACTIVO (zoom y arrastre) — v2
-    // ==========================================================
-
-    // Estados de cada territorio (llegan del cerebro). Clave = id.
+    // ===== MOTOR DEL MAPA =====
     let ESTADOS_TERRITORIO = {};
-
-    // Posiciones estimadas de los 9 territorios, en % sobre la imagen.
     const TERRITORIOS_MAPA = [
       { id: 'loc01', nombre: 'Valle Dorado',               x: 53.5, y: 11 },
       { id: 'loc02', nombre: 'Espejo Azul',                x: 46,   y: 21 },
@@ -2011,75 +1190,44 @@
       { id: 'loc08', nombre: 'El Jardín de los Recuerdos', x: 46,   y: 74 },
       { id: 'loc09', nombre: 'El Gran Regreso',            x: 49,   y: 85 }
     ];
-
     let mapaEscala = 1, mapaX = 0, mapaY = 0;
-    let mapaEscalaMin = 1;                 // se calcula al cargar
+    let mapaEscalaMin = 1;
     const MAPA_ESCALA_MAX = 5;
     let mapaImg, mapaLienzo, mapaVisor, mapaIniciado = false;
-
     function aplicarTransformMapa() {
-      mapaLienzo.style.transform =
-        'translate(' + mapaX + 'px,' + mapaY + 'px) scale(' + mapaEscala + ')';
+      mapaLienzo.style.transform = 'translate(' + mapaX + 'px,' + mapaY + 'px) scale(' + mapaEscala + ')';
     }
-
-    // Mantiene el mapa dentro de sus orillas (sin borde negro infinito).
     function limitarMapa() {
       const anchoVisor = mapaVisor.clientWidth;
       const altoVisor = mapaVisor.clientHeight;
       const anchoImg = mapaImg.naturalWidth * mapaEscala;
       const altoImg = mapaImg.naturalHeight * mapaEscala;
-
-      // Eje X
-      if (anchoImg <= anchoVisor) {
-        mapaX = (anchoVisor - anchoImg) / 2;      // centra si cabe
-      } else {
-        if (mapaX > 0) mapaX = 0;
-        if (mapaX < anchoVisor - anchoImg) mapaX = anchoVisor - anchoImg;
-      }
-      // Eje Y
-      if (altoImg <= altoVisor) {
-        mapaY = (altoVisor - altoImg) / 2;
-      } else {
-        if (mapaY > 0) mapaY = 0;
-        if (mapaY < altoVisor - altoImg) mapaY = altoVisor - altoImg;
-      }
+      if (anchoImg <= anchoVisor) { mapaX = (anchoVisor - anchoImg) / 2; }
+      else { if (mapaX > 0) mapaX = 0; if (mapaX < anchoVisor - anchoImg) mapaX = anchoVisor - anchoImg; }
+      if (altoImg <= altoVisor) { mapaY = (altoVisor - altoImg) / 2; }
+      else { if (mapaY > 0) mapaY = 0; if (mapaY < altoVisor - altoImg) mapaY = altoVisor - altoImg; }
     }
-
     function pintarMarcadores() {
       const anchoImg = mapaImg.naturalWidth;
       const altoImg = mapaImg.naturalHeight;
-
-      // Quitar marcadores anteriores (para poder refrescar).
       mapaLienzo.querySelectorAll('.marcador').forEach(function(m) { m.remove(); });
-
       TERRITORIOS_MAPA.forEach(function(t, i) {
-        // Buscar el estado real de este territorio (llega del cerebro).
         const info = ESTADOS_TERRITORIO[t.id];
         const estado = info ? info.estado : 'bloqueado';
-
         const m = document.createElement('div');
         m.className = 'marcador estado-' + estado;
         m.style.left = (t.x / 100 * anchoImg) + 'px';
         m.style.top = (t.y / 100 * altoImg) + 'px';
         m.setAttribute('data-id', t.id);
         m.title = t.nombre;
-
-        // Contenido del marcador según estado.
-        if (estado === 'bloqueado') {
-          m.innerHTML = '&#128274;';        // candado
-        } else if (estado === 'descubierto') {
-          m.innerHTML = '&#10003;';         // check
-        } else {
-          m.textContent = (i + 1);          // número (disponible)
-        }
+        if (estado === 'bloqueado') { m.innerHTML = '&#128274;'; }
+        else if (estado === 'descubierto') { m.innerHTML = '&#10003;'; }
+        else { m.textContent = (i + 1); }
         mapaLienzo.appendChild(m);
       });
     }
-
-    // Zoom centrado en un punto (px dentro del visor).
     function zoomEnPunto(nuevaEscala, cx, cy) {
       nuevaEscala = Math.min(MAPA_ESCALA_MAX, Math.max(mapaEscalaMin, nuevaEscala));
-      // El punto bajo el cursor/dedos debe quedarse en su lugar.
       const escalaRatio = nuevaEscala / mapaEscala;
       mapaX = cx - (cx - mapaX) * escalaRatio;
       mapaY = cy - (cy - mapaY) * escalaRatio;
@@ -2087,30 +1235,19 @@
       limitarMapa();
       aplicarTransformMapa();
     }
-
-    // Índice del territorio en el que arrancará enfocado el mapa (0 = marcador 1).
     let mapaFocoIndice = 0;
-
     function ajustarZoomInicial() {
       const altoVisor = mapaVisor.clientHeight;
-      // Escala mínima: el mapa cubre todo el alto del visor (nunca se aleja más).
       mapaEscalaMin = altoVisor / mapaImg.naturalHeight;
-
-      // Escala de arranque: un poco más acercada que el mínimo, para "enfocar".
       const escalaFoco = Math.min(MAPA_ESCALA_MAX, mapaEscalaMin * 1.8);
       mapaEscala = escalaFoco;
-
-      // Centrar el visor sobre el marcador objetivo.
       centrarEnTerritorio(mapaFocoIndice, false);
     }
-
-    // Centra el mapa sobre el territorio de índice dado.
     function centrarEnTerritorio(indice, animar) {
       if (indice < 0 || indice >= TERRITORIOS_MAPA.length) indice = 0;
       const t = TERRITORIOS_MAPA[indice];
       const anchoVisor = mapaVisor.clientWidth;
       const altoVisor = mapaVisor.clientHeight;
-      // Posición del marcador en píxeles reales de la imagen, ya escalada.
       const px = (t.x / 100) * mapaImg.naturalWidth * mapaEscala;
       const py = (t.y / 100) * mapaImg.naturalHeight * mapaEscala;
       mapaX = anchoVisor / 2 - px;
@@ -2120,66 +1257,46 @@
         mapaLienzo.style.transition = 'transform 0.5s ease';
         aplicarTransformMapa();
         setTimeout(function() { mapaLienzo.style.transition = ''; }, 520);
-      } else {
-        aplicarTransformMapa();
-      }
+      } else { aplicarTransformMapa(); }
     }
-
     function iniciarMapa() {
       if (mapaIniciado) return;
       mapaImg = document.getElementById('mapa-img');
       mapaLienzo = document.getElementById('mapa-lienzo');
       mapaVisor = document.getElementById('mapa-visor');
       mapaIniciado = true;
-
-      function alCargar() {
-        pintarMarcadores();
-        ajustarZoomInicial();
-      }
+      function alCargar() { pintarMarcadores(); ajustarZoomInicial(); }
       if (mapaImg.complete && mapaImg.naturalWidth) alCargar();
       else mapaImg.onload = alCargar;
-
       let arrastrando = false, ultX = 0, ultY = 0;
       let punteros = {};
       let distanciaPrevia = null, centroPrevio = null;
-      let inicioToque = null;   // para distinguir toque de arrastre
-
+      let inicioToque = null;
       function rectVisor() { return mapaVisor.getBoundingClientRect(); }
-
       mapaVisor.addEventListener('pointerdown', function(e) {
         mapaVisor.setPointerCapture(e.pointerId);
         punteros[e.pointerId] = { x: e.clientX, y: e.clientY };
         arrastrando = true; ultX = e.clientX; ultY = e.clientY;
-        // Recordar el punto y el momento en que empezó (para el "tap").
         inicioToque = { x: e.clientX, y: e.clientY, t: Date.now(), id: e.pointerId };
       });
-
       mapaVisor.addEventListener('pointermove', function(e) {
         if (!punteros[e.pointerId]) return;
         punteros[e.pointerId] = { x: e.clientX, y: e.clientY };
         const ids = Object.keys(punteros);
-
         if (ids.length >= 2) {
-          // --- Pellizco: zoom + arrastre simultáneos (como la galería) ---
           const p1 = punteros[ids[0]], p2 = punteros[ids[1]];
           const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
           const r = rectVisor();
-          const cx = (p1.x + p2.x) / 2 - r.left;   // centro actual entre dedos
+          const cx = (p1.x + p2.x) / 2 - r.left;
           const cy = (p1.y + p2.y) / 2 - r.top;
-
           if (distanciaPrevia != null && centroPrevio != null) {
-            // 1) Mover según cuánto se desplazó el centro de los dedos.
             mapaX += cx - centroPrevio.x;
             mapaY += cy - centroPrevio.y;
-            // 2) Aplicar el zoom centrado en ese punto.
             zoomEnPunto(mapaEscala * (dist / distanciaPrevia), cx, cy);
-          } else {
-            limitarMapa();
-            aplicarTransformMapa();
-          }
+          } else { limitarMapa(); aplicarTransformMapa(); }
           distanciaPrevia = dist;
           centroPrevio = { x: cx, y: cy };
-          arrastrando = false;      // el movimiento lo maneja el pellizco
+          arrastrando = false;
         } else if (arrastrando) {
           mapaX += e.clientX - ultX;
           mapaY += e.clientY - ultY;
@@ -2188,18 +1305,13 @@
           aplicarTransformMapa();
         }
       });
-
       function finPuntero(e) {
-        // ¿Fue un TOQUE (tap) y no un arrastre? Medir movimiento y tiempo.
         if (inicioToque && e.pointerId === inicioToque.id) {
           const dx = e.clientX - inicioToque.x;
           const dy = e.clientY - inicioToque.y;
           const distancia = Math.hypot(dx, dy);
           const duracion = Date.now() - inicioToque.t;
-
           if (distancia < 10 && duracion < 500) {
-            // Buscar el marcador que está bajo el punto donde solté el dedo.
-            // (No usamos e.target porque el pointer capture lo altera.)
             const elementos = document.elementsFromPoint(e.clientX, e.clientY);
             let marcador = null;
             for (let k = 0; k < elementos.length; k++) {
@@ -2209,18 +1321,13 @@
               }
             }
             if (marcador) {
-              // Evitar el "click fantasma" que en móvil dispararía un cierre.
               if (e.cancelable) e.preventDefault();
               const idTerr = marcador.getAttribute('data-id');
-              if (idTerr) {
-                // Pequeño respiro para que el gesto táctil termine limpio.
-                setTimeout(function() { abrirTerritorio(idTerr); }, 20);
-              }
+              if (idTerr) { setTimeout(function() { abrirTerritorio(idTerr); }, 20); }
             }
           }
           inicioToque = null;
         }
-
         delete punteros[e.pointerId];
         if (Object.keys(punteros).length < 2) {
           distanciaPrevia = null;
@@ -2235,8 +1342,6 @@
       }
       mapaVisor.addEventListener('pointerup', finPuntero);
       mapaVisor.addEventListener('pointercancel', finPuntero);
-
-      // Zoom con rueda (computador), centrado en el cursor.
       mapaVisor.addEventListener('wheel', function(e) {
         e.preventDefault();
         const r = rectVisor();
