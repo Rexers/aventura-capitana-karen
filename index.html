@@ -519,14 +519,72 @@
         return;
       }
       const estadoTxt = ESTADO_MIS_TXT[m.estado] || m.estado;
-      mostrarModal('<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
+
+      // ¿Puede Karen completar esta misión manualmente?
+      // Solo las de memoria/exploración que estén disponibles o en progreso.
+      const esManual = (m.categoria === 'memoria' || m.categoria === 'exploracion');
+      const puedeCompletar = esManual && (m.estado === 'disponible' || m.estado === 'en_progreso');
+
+      let botones = '';
+      if (puedeCompletar) {
+        botones =
+          '<button class="modal-btn" onclick="completarMisionKaren(\'' + m.id + '\')">Marcar como completada</button>' +
+          '<button class="modal-btn secundario" onclick="cerrarModal()">Todavía no</button>';
+      } else {
+        botones = '<button class="modal-btn secundario" onclick="cerrarModal()">Cerrar</button>';
+      }
+
+      mostrarModal(
+        '<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
         '<div style="font-size:0.75rem;letter-spacing:1.5px;text-transform:uppercase;color:#cbb489;margin-bottom:6px;">' + catTxt + '</div>' +
         '<h3>' + m.titulo + '</h3>' +
         '<div style="font-size:0.8rem;color:#cbb489;margin-bottom:14px;">Estado: ' + estadoTxt + (m.fecha_completada ? ' · ' + m.fecha_completada : '') + '</div>' +
         '<p>' + (m.descripcion || '') + '</p>' +
-        (m.requiere_evidencia ? '<p style="font-size:0.82rem;color:#8fae8f;font-style:italic;">Esta misión puede guardar una fotografía como recuerdo.</p>' : '') +
+        (m.requiere_evidencia
+            ? '<p style="font-size:0.82rem;color:#8fae8f;font-style:italic;">Esta misión puede guardar una fotografía como recuerdo.</p>'
+            : '') +
         '<div style="font-size:1.2rem;color:#e8c24a;font-weight:bold;margin:14px 0;">🪙 ' + (m.recompensa || 0) + ' Berries</div>' +
-        '<button class="modal-btn secundario" onclick="cerrarModal()">Cerrar</button>');
+        botones
+      );
+    }
+
+    // Completar una misión de memoria/exploración (acción de Karen).
+    let completandoMision = false;
+    function completarMisionKaren(idMision) {
+      if (completandoMision) return;
+      completandoMision = true;
+      mostrarModal('<p style="padding:20px 0;"><em>Registrando la hazaña…</em></p>');
+
+      fetch(URL_CEREBRO + '?accion=completar_mision&id=' + encodeURIComponent(idMision))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          completandoMision = false;
+          if (d.ok) {
+            // Celebración con los Berries ganados.
+            mostrarModal(
+              '<div class="cel-titulo">¡Misión completada!</div>' +
+              '<div class="cel-nombre">' + d.titulo + '</div>' +
+              '<div class="cel-berries">+' + d.berries_ganados + ' Berries</div>' +
+              '<button class="modal-btn cel-boton" onclick="cerrarModalYRefrescar()">¡Excelente!</button>'
+            );
+            lanzarDestellos();
+          } else if (d.ya) {
+            cargarEstado();
+            cerrarModal();
+          } else {
+            mostrarModal(
+              '<h3>Un momento…</h3><p>' + (d.error || 'No se pudo completar.') + '</p>' +
+              '<button class="modal-btn secundario" onclick="cerrarModal()">Cerrar</button>'
+            );
+          }
+        })
+        .catch(function() {
+          completandoMision = false;
+          mostrarModal(
+            '<h3>La brújula perdió la señal</h3><p>Intenta nuevamente.</p>' +
+            '<button class="modal-btn secundario" onclick="cerrarModal()">Cerrar</button>'
+          );
+        });
     }
 
     // ===== INVENTARIO =====
