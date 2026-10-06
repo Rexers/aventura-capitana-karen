@@ -517,6 +517,7 @@
       // Archivo Reservado: actualizar la barra y su contenido.
       if (estado.archivo_reservado) {
         ARCHIVO_RESERVADO = estado.archivo_reservado;
+        COUNTDOWN_DATA = estado.countdown || null;
         actualizarBarraReservado();
         pintarReservado();
       }
@@ -1342,6 +1343,9 @@
       }
     }
 
+    // Guarda el countdown que llega del cerebro.
+    let COUNTDOWN_DATA = null;
+
     // Pinta el contenido del Archivo Reservado.
     function pintarReservado() {
       const cont = document.getElementById('reservado-contenido');
@@ -1358,58 +1362,63 @@
         return;
       }
 
-      // Desbloqueado: mensaje del Gran Regreso + countdown.
-      const fechaHoy = FECHA_SISTEMA; // viene del servidor
+      // Cabecera: mensaje del Gran Regreso + 99%.
       let html =
         '<div class="reservado-intro">' +
           '<div class="ri-titulo">La expedición ha terminado…</div>' +
           '<div class="ri-frase">Pero la aventura todavía no.</div>' +
-          '<div style="padding:28px 0;display:flex;flex-direction:column;align-items:center;gap:14px;">' +
-            '<div style="font-size:2.2rem;font-weight:bold;color:#e8c24a;text-shadow:0 0 14px rgba(232,194,74,0.4);line-height:1;">' + PROGRESO_PCT + '%</div>' +
-            '<div style="font-size:0.75rem;color:#cbb489;letter-spacing:2px;line-height:1;">EXPEDICIÓN COMPLETADA</div>' +
+          '<div style="padding:26px 0 6px;">' +
+            '<div style="font-size:2.2rem;font-weight:bold;color:#e8c24a;line-height:1;text-shadow:0 0 14px rgba(232,194,74,0.4);">' + PROGRESO_PCT + '%</div>' +
+            '<div style="font-size:0.75rem;color:#cbb489;letter-spacing:2px;margin-top:10px;">EXPEDICIÓN COMPLETADA</div>' +
           '</div>' +
         '</div>';
 
-      // Buscar el día de "hoy" dentro del countdown.
-      const indiceHoy = DIAS_COUNTDOWN.findIndex(function(d) { return d.fecha === fechaHoy; });
+      const cd = COUNTDOWN_DATA;
 
-      // Caja grande del contador (si hoy es un día del countdown).
-      if (indiceHoy !== -1) {
-        const diaHoy = DIAS_COUNTDOWN[indiceHoy];
-        const faltan = 4 - indiceHoy; // T-4=4 ... T-0=0
+      // FASE TRANSICIÓN: aún no empieza el countdown.
+      if (cd && cd.fase === 'transicion' && cd.transicion) {
         html +=
           '<div class="countdown-caja">' +
-            '<div class="countdown-tlabel">Cuenta regresiva</div>' +
-            '<div class="countdown-t">' + diaHoy.t + '</div>' +
-            '<div class="countdown-sub">' +
-              (faltan > 0 ? 'Faltan ' + faltan + (faltan === 1 ? ' día' : ' días') + ' para El Despertar' : 'Hoy es El Despertar') +
-            '</div>' +
+            '<div class="countdown-tlabel">La cuenta regresiva</div>' +
+            '<div style="font-size:1.3rem;color:#e8c24a;margin:8px 0;">' + cd.transicion.titulo + '</div>' +
+            '<div class="countdown-sub" style="line-height:1.6;">' + cd.transicion.mensaje + '</div>' +
           '</div>';
+        cont.innerHTML = html;
+        return;
       }
 
-      // Lista de todos los días del countdown.
-      DIAS_COUNTDOWN.forEach(function(d, i) {
-        let clase = 'futuro';
-        let sello = '&#128274;'; // candado
-        if (d.fecha === fechaHoy) { clase = 'hoy'; sello = '&#9733;'; } // estrella
-        else if (fechaHoy > d.fecha) { clase = 'pasado'; sello = '&#10003;'; } // check
+      // FASE ACTIVA: el día de hoy en grande + los pasados en cuadritos.
+      if (cd && cd.fase === 'activo') {
+        // Caja grande del día de HOY.
+        if (cd.hoy) {
+          html +=
+            '<div class="countdown-caja">' +
+              '<div class="countdown-tlabel">' + cd.hoy.etiqueta + '</div>' +
+              '<div class="countdown-t" style="font-size:1.6rem;margin:8px 0;">' + cd.hoy.titulo + '</div>' +
+              '<div class="countdown-sub" style="line-height:1.6;">' + cd.hoy.mensaje + '</div>' +
+            '</div>';
+        }
 
-        // El contenido de cada día solo se muestra si es hoy o ya pasó.
-        const revelado = (fechaHoy >= d.fecha);
-        const titulo = (revelado && d.titulo) ? d.titulo : (revelado ? 'Un nuevo día de espera' : 'Sellado hasta su momento');
-        const msg = revelado ? '[PENDIENTE DE CONFIGURAR]' : '';
+        // Cuadritos de los días pasados (ya revelados).
+        if (cd.pasados && cd.pasados.length > 0) {
+          html += '<div class="mis-grupo-tit" style="margin-top:22px;">Días anteriores</div>';
+          cd.pasados.forEach(function(d) {
+            html +=
+              '<div class="dia-countdown pasado">' +
+                '<div class="dia-info">' +
+                  '<div class="dia-titulo">' + d.etiqueta + ' · ' + d.titulo + '</div>' +
+                  '<div class="dia-msg">' + d.mensaje + '</div>' +
+                '</div>' +
+                '<div class="dia-sello">&#10003;</div>' +
+              '</div>';
+          });
+        }
 
-        html +=
-          '<div class="dia-countdown ' + clase + '">' +
-            '<div class="dia-t">' + d.t + '</div>' +
-            '<div class="dia-info">' +
-              '<div class="dia-titulo">' + titulo + '</div>' +
-              (revelado && msg.indexOf('PENDIENTE') === -1 ? '<div class="dia-msg">' + msg + '</div>' : '') +
-            '</div>' +
-            '<div class="dia-sello">' + sello + '</div>' +
-          '</div>';
-      });
+        cont.innerHTML = html;
+        return;
+      }
 
+      // Por si acaso: desbloqueado pero sin countdown aún.
       cont.innerHTML = html;
     }
     
