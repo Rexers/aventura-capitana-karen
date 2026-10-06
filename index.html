@@ -467,7 +467,9 @@
     function cerrarMas() { document.getElementById('menu-mas').classList.remove('abierto'); }
 
     // ===== CARGA DE DATOS =====
+    let FECHA_SISTEMA = '';
     function pintarEstado(estado) {
+      if (estado.fecha_sistema) FECHA_SISTEMA = estado.fecha_sistema;
       document.getElementById('capitana').textContent = estado.capitana;
       document.getElementById('oficial').textContent = 'Primer Oficial: ' + estado.primer_oficial;
       document.getElementById('berries').textContent = '🪙 ' + estado.berries + ' Berries';
@@ -490,6 +492,13 @@
       if (estado.inventario) { LISTA_INVENTARIO = estado.inventario; pintarInventario(); }
       SALDO_ACTUAL = estado.berries;
       if (estado.recompensas) { LISTA_RECOMPENSAS = estado.recompensas; pintarTesoro(); }
+
+      // Archivo Reservado: actualizar la barra y su contenido.
+      if (estado.archivo_reservado) {
+        ARCHIVO_RESERVADO = estado.archivo_reservado;
+        actualizarBarraReservado();
+        pintarReservado();
+      }
     }
     function mostrarError() {
       document.getElementById('oficial').textContent = 'La brújula perdió temporalmente la señal. Intenta nuevamente.';
@@ -1272,6 +1281,107 @@
         .catch(function() { msg.textContent = 'Sin señal.'; });
     }
 
+    // ==========================================================
+    //  ARCHIVO RESERVADO / COUNTDOWN
+    // ==========================================================
+    let ARCHIVO_RESERVADO = { desbloqueado: false, gear5_completado: false };
+
+    // Las fechas clave del countdown (según el documento).
+    const DIAS_COUNTDOWN = [
+      { fecha: '2026-10-13', t: 'T−4', titulo: 'El Día de la Capitana' },
+      { fecha: '2026-10-14', t: 'T−3', titulo: '' },
+      { fecha: '2026-10-15', t: 'T−2', titulo: '' },
+      { fecha: '2026-10-16', t: 'T−1', titulo: '' },
+      { fecha: '2026-10-17', t: 'T−0', titulo: 'El Despertar' }
+    ];
+
+    // Muestra u oculta el botón Reservado en la barra (y mueve Tesoro).
+    function actualizarBarraReservado() {
+      const desbloqueado = ARCHIVO_RESERVADO.desbloqueado;
+      const navReservado = document.getElementById('nav-reservado');
+      const navTesoro = document.getElementById('nav-tesoro');
+      const masTesoro = document.getElementById('mas-tesoro');
+
+      if (desbloqueado) {
+        // Aparece el Reservado en la barra; Tesoro se va al "Más".
+        navReservado.style.display = '';
+        navTesoro.style.display = 'none';
+        masTesoro.style.display = '';
+      } else {
+        // Estado normal: Tesoro en la barra, Reservado oculto.
+        navReservado.style.display = 'none';
+        navTesoro.style.display = '';
+        masTesoro.style.display = 'none';
+      }
+    }
+
+    // Pinta el contenido del Archivo Reservado.
+    function pintarReservado() {
+      const cont = document.getElementById('reservado-contenido');
+      if (!cont) return;
+
+      // Si aún no está desbloqueado: mostrar el candado.
+      if (!ARCHIVO_RESERVADO.desbloqueado) {
+        cont.innerHTML =
+          '<div class="reservado-bloqueado">' +
+            '<div class="candado-grande">&#128274;</div>' +
+            '<p><strong>Archivo sellado</strong></p>' +
+            '<p>Completa la expedición para desbloquear este archivo.</p>' +
+          '</div>';
+        return;
+      }
+
+      // Desbloqueado: mensaje del Gran Regreso + countdown.
+      const fechaHoy = FECHA_SISTEMA; // viene del servidor
+      let html =
+        '<div class="reservado-intro">' +
+          '<div class="ri-titulo">La expedición ha terminado…</div>' +
+          '<div class="ri-frase">Pero la aventura todavía no.</div>' +
+        '</div>';
+
+      // Buscar el día de "hoy" dentro del countdown.
+      const indiceHoy = DIAS_COUNTDOWN.findIndex(function(d) { return d.fecha === fechaHoy; });
+
+      // Caja grande del contador (si hoy es un día del countdown).
+      if (indiceHoy !== -1) {
+        const diaHoy = DIAS_COUNTDOWN[indiceHoy];
+        const faltan = 4 - indiceHoy; // T-4=4 ... T-0=0
+        html +=
+          '<div class="countdown-caja">' +
+            '<div class="countdown-tlabel">Cuenta regresiva</div>' +
+            '<div class="countdown-t">' + diaHoy.t + '</div>' +
+            '<div class="countdown-sub">' +
+              (faltan > 0 ? 'Faltan ' + faltan + (faltan === 1 ? ' día' : ' días') + ' para El Despertar' : 'Hoy es El Despertar') +
+            '</div>' +
+          '</div>';
+      }
+
+      // Lista de todos los días del countdown.
+      DIAS_COUNTDOWN.forEach(function(d, i) {
+        let clase = 'futuro';
+        let sello = '&#128274;'; // candado
+        if (d.fecha === fechaHoy) { clase = 'hoy'; sello = '&#9733;'; } // estrella
+        else if (fechaHoy > d.fecha) { clase = 'pasado'; sello = '&#10003;'; } // check
+
+        // El contenido de cada día solo se muestra si es hoy o ya pasó.
+        const revelado = (fechaHoy >= d.fecha);
+        const titulo = (revelado && d.titulo) ? d.titulo : (revelado ? 'Un nuevo día de espera' : 'Sellado hasta su momento');
+        const msg = revelado ? '[PENDIENTE DE CONFIGURAR]' : '';
+
+        html +=
+          '<div class="dia-countdown ' + clase + '">' +
+            '<div class="dia-t">' + d.t + '</div>' +
+            '<div class="dia-info">' +
+              '<div class="dia-titulo">' + titulo + '</div>' +
+              (revelado && msg.indexOf('PENDIENTE') === -1 ? '<div class="dia-msg">' + msg + '</div>' : '') +
+            '</div>' +
+            '<div class="dia-sello">' + sello + '</div>' +
+          '</div>';
+      });
+
+      cont.innerHTML = html;
+    }
+    
     // ===== CARGA INICIAL Y ACCESO SECRETO =====
     function cargarEstado() {
       fetch(URL_CEREBRO + '?accion=estado')
