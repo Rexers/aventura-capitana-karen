@@ -153,6 +153,19 @@
     .dia-countdown .dia-titulo { font-size: 1rem; color: #f4e4c1; }
     .dia-countdown .dia-msg { font-size: 0.82rem; color: #cbb489; margin-top: 3px; line-height: 1.4; }
     .dia-countdown .dia-sello { font-size: 1.1rem; }
+        /* Botón "Reservado" recién aparecido: llama la atención */
+    #nav-reservado.nuevo {
+      animation: brillo-nav 1.8s ease-in-out infinite;
+    }
+    #nav-reservado.nuevo .ic { animation: flotar-ic 1.8s ease-in-out infinite; }
+    @keyframes brillo-nav {
+      0%, 100% { color: #cbb489; text-shadow: none; }
+      50% { color: #e8c24a; text-shadow: 0 0 12px rgba(232,194,74,0.8); }
+    }
+    @keyframes flotar-ic {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
     .cel-titulo { font-size: 1.15rem; letter-spacing: 2px; text-transform: uppercase; color: #cbb489; opacity: 0; animation: cel-aparece 0.6s ease forwards; }
     .cel-nombre { font-size: 1.7rem; color: #f4e4c1; margin: 10px 0 2px; opacity: 0; animation: cel-aparece 0.7s ease 0.4s forwards; }
     .cel-real { color: #e8c24a; font-size: 1.05rem; margin: 6px 0 4px; line-height: 1.4; opacity: 0; animation: cel-aparece 0.8s ease 1.1s forwards; }
@@ -438,7 +451,13 @@
     const URL_CEREBRO = "https://script.google.com/macros/s/AKfycbw70-gJwLl8OMSQ9RId5b9rgjJKkJP3zfVv4W4_piEWYezPH-sKHCMf7deFiVurNXvc/exec";
 
     // ===== NAVEGACIÓN =====
+       let RESERVADO_VISITADO = false;
     function irA(nombre) {
+      if (nombre === 'reservado') {
+        RESERVADO_VISITADO = true;
+        var nr = document.getElementById('nav-reservado');
+        if (nr) nr.classList.remove('nuevo');
+      }
       document.querySelectorAll('.pantalla').forEach(function(p) { p.classList.remove('activa'); });
       var destino = document.getElementById('p-' + nombre);
       if (destino) destino.classList.add('activa');
@@ -468,6 +487,7 @@
 
     // ===== CARGA DE DATOS =====
     let FECHA_SISTEMA = '';
+    let PROGRESO_PCT = 0;
     function pintarEstado(estado) {
       if (estado.fecha_sistema) FECHA_SISTEMA = estado.fecha_sistema;
       document.getElementById('capitana').textContent = estado.capitana;
@@ -477,6 +497,7 @@
         estado.progreso.descubiertos + ' / ' + estado.progreso.total + ' territorios (' + estado.progreso.porcentaje + '%)';
       document.getElementById('progreso').classList.remove('cargando');
       document.getElementById('barra').style.width = estado.progreso.porcentaje + '%';
+        PROGRESO_PCT = estado.progreso.porcentaje;
       var mision = document.getElementById('mision');
       mision.textContent = estado.mision_actual ? estado.mision_actual.titulo : '(sin misión activa)';
       mision.classList.remove('cargando');
@@ -876,6 +897,8 @@
       var destellos = document.getElementById('cel-destellos');
       if (destellos) destellos.innerHTML = '';
       const id = TERRITORIO_RECIEN_DESCUBIERTO;
+      // Limpiar de inmediato para que ningún refresco posterior lo reabra.
+      TERRITORIO_RECIEN_DESCUBIERTO = null;
       fetch(URL_CEREBRO + '?accion=estado')
         .then(function(r) { return r.json(); })
         .then(function(d) {
@@ -1307,6 +1330,10 @@
         navReservado.style.display = '';
         navTesoro.style.display = 'none';
         masTesoro.style.display = '';
+        // Brillo de "algo nuevo" hasta que Karen entre por primera vez.
+        if (!RESERVADO_VISITADO) {
+          navReservado.classList.add('nuevo');
+        }
       } else {
         // Estado normal: Tesoro en la barra, Reservado oculto.
         navReservado.style.display = 'none';
@@ -1337,6 +1364,8 @@
         '<div class="reservado-intro">' +
           '<div class="ri-titulo">La expedición ha terminado…</div>' +
           '<div class="ri-frase">Pero la aventura todavía no.</div>' +
+          '<div style="margin-top:12px;font-size:1.4rem;font-weight:bold;color:#e8c24a;">' + PROGRESO_PCT + '%</div>' +
+          '<div style="font-size:0.78rem;color:#cbb489;letter-spacing:1px;">EXPEDICIÓN COMPLETADA</div>' +
         '</div>';
 
       // Buscar el día de "hoy" dentro del countdown.
