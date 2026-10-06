@@ -154,6 +154,37 @@
       box-shadow: 0 0 24px rgba(232,194,74,0.25);
     }
 
+        /* ==========================================================
+       BITÁCORA (diseño sencillo; el cuaderno pirata va en el diseño final)
+       ========================================================== */
+    .bit-nueva-btn {
+      width: 100%; padding: 14px; margin-bottom: 18px;
+      background: #c0392b; color: #fff; border: 1px solid #f4e4c1;
+      border-radius: 10px; font-size: 1rem; font-family: inherit; cursor: pointer;
+    }
+    .bit-entrada {
+      background: linear-gradient(135deg, #2a1d0e, #22160c);
+      border: 1px solid #8a6d3b; border-radius: 10px;
+      padding: 16px 18px; margin-bottom: 14px;
+    }
+    .bit-entrada .bit-fecha { font-size: 0.72rem; color: #cbb489; letter-spacing: 1px; text-transform: uppercase; }
+    .bit-entrada .bit-titulo { font-size: 1.15rem; color: #f4e4c1; margin: 4px 0 8px; }
+    .bit-entrada .bit-texto { font-size: 0.92rem; line-height: 1.6; opacity: 0.9; white-space: pre-wrap; }
+    .bit-entrada .bit-acciones { display: flex; gap: 8px; margin-top: 12px; }
+    .bit-mini {
+      background: transparent; border: 1px solid #6b5528; color: #cbb489;
+      border-radius: 6px; padding: 6px 12px; font-size: 0.78rem; font-family: inherit; cursor: pointer;
+    }
+    .bit-mini.borrar { border-color: #7a2a22; color: #e0a0a0; }
+    .bit-vacia { text-align: center; opacity: 0.6; font-style: italic; padding: 30px 10px; }
+    /* Campos del editor de bitácora */
+    .bit-input {
+      width: 100%; padding: 12px; font-size: 0.95rem;
+      background: #0d0a04; border: 1px solid #6b5528; border-radius: 8px;
+      color: #f4e4c1; font-family: inherit; margin-bottom: 12px;
+    }
+    textarea.bit-input { resize: vertical; line-height: 1.6; min-height: 120px; }
+
     /* Lista de días del countdown */
     .dia-countdown {
       display: flex; align-items: center; gap: 12px;
@@ -290,9 +321,11 @@
       <div id="inv-descubiertos" class="inv-grid"></div>
     </section>
 
+    <!-- ================= BITÁCORA ================= -->
     <section class="pantalla" id="p-bitacora">
       <h2>📓 Bitácora</h2>
-      <div class="placeholder">Aquí la Capitana escribirá su diario de viaje.</div>
+      <button class="bit-nueva-btn" onclick="bitacoraNueva()">✒️ Nueva entrada</button>
+      <div id="bitacora-lista"></div>
     </section>
 
         <!-- ================= ARCHIVO RESERVADO / COUNTDOWN ================= -->
@@ -508,6 +541,9 @@
           mostrarAyudaMapa();
         }, 60);
       }
+      if (nombre === 'bitacora') {
+        cargarBitacora();
+      }
     }
     let ayudaTimer = null;
     function mostrarAyudaMapa() {
@@ -585,6 +621,129 @@
       cont.innerHTML = html;
     }
 
+    // ==========================================================
+    //  BITÁCORA (crear, ver, editar, borrar)
+    // ==========================================================
+
+    // Cargar y pintar la lista de entradas.
+    function cargarBitacora() {
+      const cont = document.getElementById('bitacora-lista');
+      if (!cont) return;
+      cont.innerHTML = '<div class="bit-vacia">Cargando el diario…</div>';
+      fetch(URL_CEREBRO + '?accion=bitacora_listar')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (!d.ok) { cont.innerHTML = '<div class="bit-vacia">No se pudo cargar.</div>'; return; }
+          if (!d.entradas.length) {
+            cont.innerHTML = '<div class="bit-vacia">Tu diario está en blanco.<br>Escribe tu primera entrada, Capitana.</div>';
+            return;
+          }
+          let html = '';
+          d.entradas.forEach(function(e) {
+            html +=
+              '<div class="bit-entrada">' +
+                '<div class="bit-fecha">' + e.fecha + '</div>' +
+                (e.titulo ? '<div class="bit-titulo">' + e.titulo + '</div>' : '') +
+                '<div class="bit-texto">' + e.texto + '</div>' +
+                '<div class="bit-acciones">' +
+                  '<button class="bit-mini" onclick="bitacoraEditar(\'' + e.id + '\')">Editar</button>' +
+                  '<button class="bit-mini borrar" onclick="bitacoraBorrar(\'' + e.id + '\')">Borrar</button>' +
+                '</div>' +
+              '</div>';
+          });
+          cont.innerHTML = html;
+          // Guardar las entradas para poder editarlas.
+          ENTRADAS_BITACORA = d.entradas;
+        })
+        .catch(function() { cont.innerHTML = '<div class="bit-vacia">La brújula perdió la señal.</div>'; });
+    }
+
+    let ENTRADAS_BITACORA = [];
+
+    // Abrir el editor para una NUEVA entrada.
+    function bitacoraNueva() {
+      const hoy = new Date().toISOString().slice(0, 10);
+      mostrarModal(
+        '<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
+        '<h3>Nueva entrada</h3>' +
+        '<label class="admin-etiqueta" style="text-align:left;display:block;">Fecha</label>' +
+        '<input type="date" id="bit-fecha" class="bit-input" value="' + hoy + '">' +
+        '<label class="admin-etiqueta" style="text-align:left;display:block;">Título (opcional)</label>' +
+        '<input type="text" id="bit-tit" class="bit-input" placeholder="Un título para este recuerdo…">' +
+        '<label class="admin-etiqueta" style="text-align:left;display:block;">¿Qué pasó hoy, Capitana?</label>' +
+        '<textarea id="bit-txt" class="bit-input" placeholder="Escribe aquí tu recuerdo…"></textarea>' +
+        '<button class="modal-btn" onclick="bitacoraGuardarNueva()">Guardar en el diario</button>' +
+        '<button class="modal-btn secundario" onclick="cerrarModal()">Cancelar</button>' +
+        '<div id="bit-msg" class="admin-msg" style="text-align:center;"></div>'
+      );
+    }
+
+    function bitacoraGuardarNueva() {
+      const datos = {
+        fecha: document.getElementById('bit-fecha').value,
+        titulo: document.getElementById('bit-tit').value,
+        texto: document.getElementById('bit-txt').value
+      };
+      const msg = document.getElementById('bit-msg');
+      if (!datos.titulo && !datos.texto) { msg.textContent = 'Escribe algo, Capitana.'; return; }
+      msg.textContent = 'Guardando…';
+      fetch(URL_CEREBRO + '?accion=bitacora_crear&datos=' + encodeURIComponent(JSON.stringify(datos)))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.ok) { cerrarModal(); cargarBitacora(); }
+          else { msg.textContent = d.error || 'No se pudo guardar.'; }
+        })
+        .catch(function() { msg.textContent = 'Sin señal.'; });
+    }
+
+    // Abrir el editor para EDITAR una entrada existente.
+    function bitacoraEditar(id) {
+      const e = ENTRADAS_BITACORA.find(function(x) { return x.id === id; });
+      if (!e) return;
+      mostrarModal(
+        '<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
+        '<h3>Editar entrada</h3>' +
+        '<label class="admin-etiqueta" style="text-align:left;display:block;">Fecha</label>' +
+        '<input type="date" id="bit-fecha" class="bit-input" value="' + e.fecha_iso + '">' +
+        '<label class="admin-etiqueta" style="text-align:left;display:block;">Título</label>' +
+        '<input type="text" id="bit-tit" class="bit-input" value="' + (e.titulo || '').replace(/"/g, '&quot;') + '">' +
+        '<label class="admin-etiqueta" style="text-align:left;display:block;">Texto</label>' +
+        '<textarea id="bit-txt" class="bit-input">' + (e.texto || '') + '</textarea>' +
+        '<button class="modal-btn" onclick="bitacoraGuardarEdicion(\'' + id + '\')">Guardar cambios</button>' +
+        '<button class="modal-btn secundario" onclick="cerrarModal()">Cancelar</button>' +
+        '<div id="bit-msg" class="admin-msg" style="text-align:center;"></div>'
+      );
+    }
+
+    function bitacoraGuardarEdicion(id) {
+      const datos = {
+        id: id,
+        fecha: document.getElementById('bit-fecha').value,
+        titulo: document.getElementById('bit-tit').value,
+        texto: document.getElementById('bit-txt').value
+      };
+      const msg = document.getElementById('bit-msg');
+      msg.textContent = 'Guardando…';
+      fetch(URL_CEREBRO + '?accion=bitacora_editar&datos=' + encodeURIComponent(JSON.stringify(datos)))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.ok) { cerrarModal(); cargarBitacora(); }
+          else { msg.textContent = d.error || 'No se pudo guardar.'; }
+        })
+        .catch(function() { msg.textContent = 'Sin señal.'; });
+    }
+
+    function bitacoraBorrar(id) {
+      if (!confirm('¿Borrar esta entrada del diario? No se puede deshacer.')) return;
+      fetch(URL_CEREBRO + '?accion=bitacora_borrar&id=' + encodeURIComponent(id))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.ok) cargarBitacora();
+          else alert(d.error || 'No se pudo borrar.');
+        })
+        .catch(function() { alert('Sin señal.'); });
+    }
+    
     // ===== MISIONES =====
     let LISTA_MISIONES = [];
     const CATEGORIAS_MIS = [
