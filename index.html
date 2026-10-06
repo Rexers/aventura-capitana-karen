@@ -744,9 +744,10 @@
       };
       const msg = document.getElementById('bit-msg');
 
-      // VALIDAR PRIMERO (antes de subir nada).
-      if (!datos.titulo && !datos.texto && !FOTO_PENDIENTE) {
-        msg.textContent = 'Escribe algo o añade una foto, Capitana.';
+      // VALIDAR PRIMERO (antes de subir ninguna foto).
+      // Se exige al menos un TÍTULO para crear la entrada.
+      if (!datos.titulo || !datos.titulo.trim()) {
+        msg.textContent = 'Ponle un título a tu recuerdo, Capitana.';
         return;
       }
 
