@@ -364,6 +364,25 @@
             <p class="admin-nota" style="margin-top:10px;margin-bottom:0;">Estos ajustes no aparecen en el historial de la Capitana.</p>
           </div>
 
+                    <!-- Simulador de fechas (pruebas) -->
+          <div class="admin-seccion">
+            <div class="admin-seccion-tit">Simular fecha (pruebas)</div>
+            <div id="admin-fecha-actual" class="admin-nota" style="margin-bottom:10px;">—</div>
+            <label class="admin-etiqueta">Fecha a simular (AAAA-MM-DD)</label>
+            <input type="date" id="admin-fecha-input" class="admin-input">
+            <button class="admin-btn-mini" onclick="adminSimularFecha()">Simular esta fecha</button>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;">
+              <button class="admin-btn-mini" style="background:#4a3c1e;" onclick="adminSimularRapido('2026-10-12')">12 (Regreso)</button>
+              <button class="admin-btn-mini" style="background:#4a3c1e;" onclick="adminSimularRapido('2026-10-13')">13 (Cumple)</button>
+              <button class="admin-btn-mini" style="background:#4a3c1e;" onclick="adminSimularRapido('2026-10-14')">14 (T−3)</button>
+              <button class="admin-btn-mini" style="background:#4a3c1e;" onclick="adminSimularRapido('2026-10-15')">15 (T−2)</button>
+              <button class="admin-btn-mini" style="background:#4a3c1e;" onclick="adminSimularRapido('2026-10-16')">16 (T−1)</button>
+              <button class="admin-btn-mini" style="background:#4a3c1e;" onclick="adminSimularRapido('2026-10-17')">17 (Despertar)</button>
+            </div>
+            <button class="admin-btn-mini" style="margin-top:8px;background:#3a5a40;" onclick="adminVolverHoy()">↩️ Volver a la fecha real</button>
+            <div id="admin-fecha-msg" class="admin-msg"></div>
+          </div>
+
           <div class="admin-seccion">
             <div class="admin-seccion-tit">Editar territorios</div>
             <label class="admin-etiqueta">Elige un territorio</label>
@@ -984,6 +1003,7 @@
       document.getElementById('admin-login').style.display = 'none';
       document.getElementById('admin-panel').style.display = 'block';
       adminCargarListaTerritorios();
+      adminVerFechaActual();
     }
     function logoutAdmin() {
       if (adminToken) { fetch(URL_CEREBRO + '?accion=logout&token=' + encodeURIComponent(adminToken)); }
@@ -1027,6 +1047,51 @@
           else { alert(d.error || 'No se pudo fijar el saldo.'); manejarSesionExpirada(d); }
         })
         .catch(function() { alert('Sin señal.'); });
+    }
+        // --- Simulador de fechas ---
+    function adminVerFechaActual() {
+      fetch(URL_CEREBRO + '?accion=admin_ver_fecha&token=' + encodeURIComponent(adminToken))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (!d.ok) { manejarSesionExpirada(d); return; }
+          const el = document.getElementById('admin-fecha-actual');
+          el.textContent = 'Fecha usada ahora: ' + d.fecha_usada + (d.es_simulada ? ' (SIMULADA)' : ' (real)');
+          el.style.color = d.es_simulada ? '#e8c24a' : '#cbb489';
+        })
+        .catch(function() {});
+    }
+
+    function adminSimularFecha() {
+      const fecha = document.getElementById('admin-fecha-input').value;
+      if (!fecha) { document.getElementById('admin-fecha-msg').textContent = 'Elige una fecha.'; return; }
+      adminAplicarFecha(fecha);
+    }
+
+    function adminSimularRapido(fecha) {
+      adminAplicarFecha(fecha);
+    }
+
+    function adminVolverHoy() {
+      adminAplicarFecha('');
+    }
+
+    function adminAplicarFecha(fecha) {
+      const msg = document.getElementById('admin-fecha-msg');
+      msg.textContent = 'Aplicando…';
+      fetch(URL_CEREBRO + '?accion=admin_fijar_fecha&token=' + encodeURIComponent(adminToken) +
+            '&fecha=' + encodeURIComponent(fecha))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.ok) {
+            msg.textContent = '✔ ' + d.mensaje;
+            adminVerFechaActual();
+            cargarEstado(); // refresca el countdown y toda la app
+          } else {
+            msg.textContent = d.error || 'No se pudo.';
+            manejarSesionExpirada(d);
+          }
+        })
+        .catch(function() { msg.textContent = 'Sin señal.'; });
     }
     function adminDeshacerDescubrimiento() {
       const seguro = confirm('¿Deshacer el último territorio descubierto?\n\nVolverá a estar disponible, su misión se bloqueará de nuevo y se le quitarán a la Capitana los Berries que dio.');
