@@ -731,14 +731,26 @@
       lector.readAsDataURL(archivo);
     }
 
+    let guardandoBitacora = false;
     function bitacoraGuardarNueva() {
+      // Blindaje: si ya se está guardando, ignorar clics extra.
+      if (guardandoBitacora) return;
+
       const datos = {
         fecha: document.getElementById('bit-fecha').value,
         titulo: document.getElementById('bit-tit').value,
         texto: document.getElementById('bit-txt').value
       };
       const msg = document.getElementById('bit-msg');
-      if (!datos.titulo && !datos.texto && !FOTO_PENDIENTE) { msg.textContent = 'Escribe algo o añade una foto, Capitana.'; return; }
+
+      // VALIDAR PRIMERO (antes de subir nada).
+      if (!datos.titulo && !datos.texto && !FOTO_PENDIENTE) {
+        msg.textContent = 'Escribe algo o añade una foto, Capitana.';
+        return;
+      }
+
+      // A partir de aquí, bloquear para evitar duplicados.
+      guardandoBitacora = true;
 
       // Función que crea la entrada (con o sin foto ya subida).
       function crearEntrada(mediaId) {
@@ -746,10 +758,11 @@
         fetch(URL_CEREBRO + '?accion=bitacora_crear&datos=' + encodeURIComponent(JSON.stringify(datos)))
           .then(function(r) { return r.json(); })
           .then(function(d) {
+            guardandoBitacora = false;
             if (d.ok) { FOTO_PENDIENTE = null; cerrarModal(); cargarBitacora(); }
             else { msg.textContent = d.error || 'No se pudo guardar.'; }
           })
-          .catch(function() { msg.textContent = 'Sin señal.'; });
+          .catch(function() { guardandoBitacora = false; msg.textContent = 'Sin señal.'; });
       }
 
       // Si hay foto, subirla primero (por POST).
@@ -766,10 +779,11 @@
               msg.textContent = 'Guardando la entrada…';
               crearEntrada(d.drive_id);
             } else {
+              guardandoBitacora = false;
               msg.textContent = d.error || 'No se pudo subir la foto.';
             }
           })
-          .catch(function() { msg.textContent = 'Sin señal al subir la foto.'; });
+          .catch(function() { guardandoBitacora = false; msg.textContent = 'Sin señal al subir la foto.'; });
       } else {
         msg.textContent = 'Guardando…';
         crearEntrada(null);
