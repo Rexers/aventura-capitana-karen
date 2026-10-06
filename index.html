@@ -176,6 +176,7 @@
       border-radius: 6px; padding: 6px 12px; font-size: 0.78rem; font-family: inherit; cursor: pointer;
     }
     .bit-mini.borrar { border-color: #7a2a22; color: #e0a0a0; }
+    .bit-foto-cargando { font-size: 0.8rem; color: #cbb489; font-style: italic; opacity: 0.6; margin-top: 10px; }
     .bit-vacia { text-align: center; opacity: 0.6; font-style: italic; padding: 30px 10px; }
     /* Campos del editor de bitácora */
     .bit-input {
@@ -640,11 +641,15 @@
           }
           let html = '';
           d.entradas.forEach(function(e) {
+            const fotoHtml = e.media_ids
+              ? '<div class="bit-foto-cont" id="foto-' + e.id + '"><div class="bit-foto-cargando">Cargando foto…</div></div>'
+              : '';
             html +=
               '<div class="bit-entrada">' +
                 '<div class="bit-fecha">' + e.fecha + '</div>' +
                 (e.titulo ? '<div class="bit-titulo">' + e.titulo + '</div>' : '') +
                 '<div class="bit-texto">' + e.texto + '</div>' +
+                fotoHtml +
                 '<div class="bit-acciones">' +
                   '<button class="bit-mini" onclick="bitacoraEditar(\'' + e.id + '\')">Editar</button>' +
                   '<button class="bit-mini borrar" onclick="bitacoraBorrar(\'' + e.id + '\')">Borrar</button>' +
@@ -652,6 +657,10 @@
               '</div>';
           });
           cont.innerHTML = html;
+          // Cargar las fotos (una por una, después de pintar el texto).
+          d.entradas.forEach(function(e) {
+            if (e.media_ids) cargarFotoEntrada(e.id, e.media_ids);
+          });
           // Guardar las entradas para poder editarlas.
           ENTRADAS_BITACORA = d.entradas;
         })
@@ -672,10 +681,54 @@
         '<input type="text" id="bit-tit" class="bit-input" placeholder="Un título para este recuerdo…">' +
         '<label class="admin-etiqueta" style="text-align:left;display:block;">¿Qué pasó hoy, Capitana?</label>' +
         '<textarea id="bit-txt" class="bit-input" placeholder="Escribe aquí tu recuerdo…"></textarea>' +
+        '<label class="admin-etiqueta" style="text-align:left;display:block;">Foto (opcional)</label>' +
+        '<input type="file" id="bit-foto" accept="image/*" class="bit-input" onchange="bitacoraPreviewFoto()">' +
+        '<div id="bit-foto-preview" style="text-align:center;margin-bottom:12px;"></div>' +
+        '<div id="bit-foto-estado" style="font-size:0.8rem;color:#cbb489;text-align:center;margin-bottom:8px;"></div>' +
         '<button class="modal-btn" onclick="bitacoraGuardarNueva()">Guardar en el diario</button>' +
         '<button class="modal-btn secundario" onclick="cerrarModal()">Cancelar</button>' +
         '<div id="bit-msg" class="admin-msg" style="text-align:center;"></div>'
       );
+    }
+
+    // Guarda temporalmente la foto reducida (lista para subir).
+    let FOTO_PENDIENTE = null;
+
+    // Cuando Karen elige una foto: reducirla y previsualizarla.
+    function bitacoraPreviewFoto() {
+      const input = document.getElementById('bit-foto');
+      const estado = document.getElementById('bit-foto-estado');
+      const preview = document.getElementById('bit-foto-preview');
+      if (!input.files || !input.files[0]) { FOTO_PENDIENTE = null; preview.innerHTML = ''; return; }
+
+      const archivo = input.files[0];
+      estado.textContent = 'Preparando la foto…';
+
+      const lector = new FileReader();
+      lector.onload = function(ev) {
+        const img = new Image();
+        img.onload = function() {
+          // Reducir a máximo 900px de ancho, manteniendo proporción.
+          const maxAncho = 900;
+          let ancho = img.width, alto = img.height;
+          if (ancho > maxAncho) {
+            alto = Math.round(alto * (maxAncho / ancho));
+            ancho = maxAncho;
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = ancho; canvas.height = alto;
+          canvas.getContext('2d').drawImage(img, 0, 0, ancho, alto);
+          // Convertir a JPG comprimido (texto Base64).
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          FOTO_PENDIENTE = dataUrl;
+          // Previsualizar.
+          preview.innerHTML = '<img src="' + dataUrl + '" style="max-width:100%;border-radius:8px;border:1px solid #6b5528;">';
+          const kb = Math.round(dataUrl.length / 1024);
+          estado.textContent = 'Foto lista (' + kb + ' KB aprox.)';
+        };
+        img.src = ev.target.result;
+      };
+      lector.readAsDataURL(archivo);
     }
 
     function bitacoraGuardarNueva() {
@@ -685,15 +738,42 @@
         texto: document.getElementById('bit-txt').value
       };
       const msg = document.getElementById('bit-msg');
-      if (!datos.titulo && !datos.texto) { msg.textContent = 'Escribe algo, Capitana.'; return; }
-      msg.textContent = 'Guardando…';
-      fetch(URL_CEREBRO + '?accion=bitacora_crear&datos=' + encodeURIComponent(JSON.stringify(datos)))
-        .then(function(r) { return r.json(); })
-        .then(function(d) {
-          if (d.ok) { cerrarModal(); cargarBitacora(); }
-          else { msg.textContent = d.error || 'No se pudo guardar.'; }
-        })
-        .catch(function() { msg.textContent = 'Sin señal.'; });
+      if (!datos.titulo && !datos.texto && !FOTO_PENDIENTE) { msg.textContent = 'Escribe algo o añade una foto, Capitana.'; return; }
+
+      // Función que crea la entrada (con o sin foto ya subida).
+      function crearEntrada(mediaId) {
+        if (mediaId) datos.media_ids = mediaId;
+        fetch(URL_CEREBRO + '?accion=bitacora_crear&datos=' + encodeURIComponent(JSON.stringify(datos)))
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            if (d.ok) { FOTO_PENDIENTE = null; cerrarModal(); cargarBitacora(); }
+            else { msg.textContent = d.error || 'No se pudo guardar.'; }
+          })
+          .catch(function() { msg.textContent = 'Sin señal.'; });
+      }
+
+      // Si hay foto, subirla primero (por POST).
+      if (FOTO_PENDIENTE) {
+        msg.textContent = 'Subiendo la foto… (puede tardar unos segundos)';
+        const cuerpo = new URLSearchParams();
+        cuerpo.append('accion', 'subir_foto');
+        cuerpo.append('foto', FOTO_PENDIENTE);
+        cuerpo.append('nombre', 'bitacora_' + Date.now() + '.jpg');
+        fetch(URL_CEREBRO, { method: 'POST', body: cuerpo })
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            if (d.ok) {
+              msg.textContent = 'Guardando la entrada…';
+              crearEntrada(d.drive_id);
+            } else {
+              msg.textContent = d.error || 'No se pudo subir la foto.';
+            }
+          })
+          .catch(function() { msg.textContent = 'Sin señal al subir la foto.'; });
+      } else {
+        msg.textContent = 'Guardando…';
+        crearEntrada(null);
+      }
     }
 
     // Abrir el editor para EDITAR una entrada existente.
@@ -742,6 +822,22 @@
           else alert(d.error || 'No se pudo borrar.');
         })
         .catch(function() { alert('Sin señal.'); });
+    }
+
+    // Carga la foto de una entrada desde Drive y la muestra.
+    function cargarFotoEntrada(idEntrada, driveId) {
+      fetch(URL_CEREBRO + '?accion=obtener_foto&drive_id=' + encodeURIComponent(driveId))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          const cont = document.getElementById('foto-' + idEntrada);
+          if (!cont) return;
+          if (d.ok) {
+            cont.innerHTML = '<img src="' + d.data_url + '" style="max-width:100%;border-radius:8px;border:1px solid #6b5528;margin-top:10px;">';
+          } else {
+            cont.innerHTML = '<div class="bit-foto-cargando">No se pudo cargar la foto.</div>';
+          }
+        })
+        .catch(function() {});
     }
     
     // ===== MISIONES =====
