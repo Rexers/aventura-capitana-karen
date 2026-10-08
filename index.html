@@ -11,6 +11,7 @@
     @font-face{font-family:'LibreB';src:url('libre-bold.ttf') format('truetype');}
     @font-face{font-family:'Cormorant';src:url('cormorant.ttf') format('truetype');}
     @font-face{font-family:'Kaushan';src:url('kaushan.ttf') format('truetype');}
+    @font-face{font-family:'Caveat';src:url('caveat.ttf') format('truetype');}
     * { box-sizing: border-box; }
     :root { padding-top: env(safe-area-inset-top, 0px); }
     html, body { height: 100%; margin: 0; }
@@ -196,6 +197,22 @@
       color: #f4e4c1; font-family: inherit; margin-bottom: 12px;
     }
     textarea.bit-input { resize: vertical; line-height: 1.6; min-height: 120px; }
+    /* Hoja de cuaderno (crear/editar entrada) */
+    .hoja { background: #fbf4df; border-radius: 4px; position: relative; overflow: hidden; box-shadow: 0 6px 16px rgba(0,0,0,.4); border: 1px solid #d9c592; padding: 12px 18px 16px 50px; }
+    .hoja .margen { position: absolute; top: 0; bottom: 0; left: 38px; width: 2px; background: rgba(188,80,66,.5); }
+    .hoja .h-fecha { font-family: 'Caveat', cursive; font-size: 1.3rem; color: #9c7a3e; background: transparent; border: none; outline: none; text-align: right; width: 100%; padding: 2px 0; }
+    .hoja .h-titulo { font-family: 'Caveat', cursive; font-size: 2rem; color: #3a2b12; line-height: 44px; height: 46px; background: transparent; border: none; border-bottom: 1px solid #d2b97e; outline: none; width: 100%; padding: 0; }
+    .hoja .h-titulo::placeholder, .hoja .h-cuerpo::placeholder { color: #bcac84; }
+    .hoja .h-fotos:not(:empty) { text-align: center; margin: 10px 0 2px; }
+    .mini-pola { display: inline-block; background: #fbf7ee; padding: 7px 7px 12px; box-shadow: 0 5px 12px rgba(0,0,0,.4); transform: rotate(-3deg); border: 1px solid #e0d6c0; width: 62%; position: relative; }
+    .mini-pola img { width: 100%; display: block; }
+    .mini-pola::before { content: ""; position: absolute; top: -8px; left: 50%; transform: translateX(-50%) rotate(-5deg); width: 50px; height: 18px; background: rgba(210,195,150,.55); }
+    .hoja .h-cuerpo { font-family: 'Caveat', cursive; font-size: 1.5rem; color: #33281a; line-height: 44px; background: repeating-linear-gradient(#fbf4df, #fbf4df 43px, #d2b97e 44px); background-attachment: local; border: none; outline: none; width: 100%; resize: none; height: 264px; overflow-y: auto; padding: 0; margin-top: 6px; }
+    .bf-btn { display: block; width: 100%; margin-top: 14px; padding: 13px; border-radius: 9px; font-family: 'Cinzel', serif; font-weight: 700; font-size: 0.95rem; cursor: pointer; border: 1px solid #6e4a12; background: linear-gradient(180deg,#f0c353,#c6922a); color: #2a1a08; }
+    .bf-btn.sec { background: transparent; color: #e2c88c; border-color: #b08a4e; font-weight: 400; }
+    .h-adj { display: block; text-align: center; font-family: 'Cinzel', serif; font-size: 0.78rem; letter-spacing: 1px; color: #e0c070; margin-top: 12px; cursor: pointer; }
+    .bf-descartar { display: block; width: 100%; background: none; border: none; color: #d98a7a; font-size: 0.78rem; font-family: 'Libre', serif; text-decoration: underline; cursor: pointer; margin-top: 10px; }
+    .bit-draft-hint { font-size: 0.74rem; color: #c9b081; font-style: italic; text-align: center; margin-top: 8px; min-height: 1em; }
 
     /* Lista de días del countdown */
     .dia-countdown {
@@ -744,21 +761,60 @@
       const hoy = new Date().toISOString().slice(0, 10);
       mostrarModal(
         '<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
-        '<h3>Nueva entrada</h3>' +
-        '<label class="admin-etiqueta" style="text-align:left;display:block;">Fecha</label>' +
-        '<input type="date" id="bit-fecha" class="bit-input" value="' + hoy + '">' +
-        '<label class="admin-etiqueta" style="text-align:left;display:block;">Título (opcional)</label>' +
-        '<input type="text" id="bit-tit" class="bit-input" placeholder="Un título para este recuerdo…">' +
-        '<label class="admin-etiqueta" style="text-align:left;display:block;">¿Qué pasó hoy, Capitana?</label>' +
-        '<textarea id="bit-txt" class="bit-input" placeholder="Escribe aquí tu recuerdo…"></textarea>' +
-        '<label class="admin-etiqueta" style="text-align:left;display:block;">Foto (opcional)</label>' +
-        '<input type="file" id="bit-foto" accept="image/*" class="bit-input" onchange="bitacoraPreviewFoto()">' +
-        '<div id="bit-foto-preview" style="text-align:center;margin-bottom:12px;"></div>' +
-        '<div id="bit-foto-estado" style="font-size:0.8rem;color:#cbb489;text-align:center;margin-bottom:8px;"></div>' +
-        '<button class="modal-btn" onclick="bitacoraGuardarNueva()">Guardar en el diario</button>' +
-        '<button class="modal-btn secundario" onclick="cerrarModal()">Cancelar</button>' +
-        '<div id="bit-msg" class="admin-msg" style="text-align:center;"></div>'
+        '<div class="hoja">' +
+          '<div class="margen"></div>' +
+          '<input type="date" id="bit-fecha" class="h-fecha" value="' + hoy + '" oninput="guardarBorradorNueva()">' +
+          '<input type="text" id="bit-tit" class="h-titulo" placeholder="Título…" oninput="guardarBorradorNueva()">' +
+          '<div id="bit-foto-top" class="h-fotos"></div>' +
+          '<textarea id="bit-txt" class="h-cuerpo" placeholder="Querido diario…" oninput="guardarBorradorNueva()"></textarea>' +
+        '</div>' +
+        '<label class="h-adj">&#128206; Adjuntar foto<input type="file" id="bit-foto" accept="image/*" hidden onchange="bitacoraPreviewFoto()"></label>' +
+        '<div id="bit-foto-estado" style="font-size:0.78rem;color:#c9b081;text-align:center;margin-top:4px;"></div>' +
+        '<button class="bf-btn" onclick="bitacoraGuardarNueva()">Guardar en el diario</button>' +
+        '<button class="bf-btn sec" onclick="cerrarModal()">Cerrar</button>' +
+        '<button class="bf-descartar" onclick="descartarBorradorNueva()">Descartar borrador</button>' +
+        '<div id="bit-draft-hint" class="bit-draft-hint"></div>' +
+        '<div id="bit-msg" class="admin-msg" style="text-align:center;color:#e0a0a0;"></div>'
       );
+      cargarBorradorNueva();
+    }
+
+    // ---- Borrador local (autoguardado en el teléfono) ----
+    let bitDraftTimer = null;
+    function gvBit(id) { const el = document.getElementById(id); return el ? el.value : ''; }
+    function svBit(id, v) { const el = document.getElementById(id); if (el) el.value = v; }
+    function guardarBorradorNueva() {
+      if (bitDraftTimer) clearTimeout(bitDraftTimer);
+      bitDraftTimer = setTimeout(function() {
+        try {
+          const d = { fecha: gvBit('bit-fecha'), titulo: gvBit('bit-tit'), texto: gvBit('bit-txt'), foto: FOTO_PENDIENTE || '' };
+          if (d.titulo || d.texto || d.foto) localStorage.setItem('bit_draft_nueva', JSON.stringify(d));
+          const h = document.getElementById('bit-draft-hint'); if (h) h.textContent = '✓ Guardado como borrador';
+        } catch (e) {}
+      }, 500);
+    }
+    function cargarBorradorNueva() {
+      try {
+        const raw = localStorage.getItem('bit_draft_nueva'); if (!raw) return;
+        const d = JSON.parse(raw);
+        if (d.fecha) svBit('bit-fecha', d.fecha);
+        if (d.titulo) svBit('bit-tit', d.titulo);
+        if (d.texto) svBit('bit-txt', d.texto);
+        if (d.foto) {
+          FOTO_PENDIENTE = d.foto;
+          const p = document.getElementById('bit-foto-top'); if (p) p.innerHTML = '<div class="mini-pola"><img src="' + d.foto + '"></div>';
+          const e = document.getElementById('bit-foto-estado'); if (e) e.textContent = 'Foto recuperada del borrador.';
+        }
+        const h = document.getElementById('bit-draft-hint'); if (h) h.textContent = 'Recuperamos lo que estabas escribiendo.';
+      } catch (e) {}
+    }
+    function descartarBorradorNueva() {
+      try { localStorage.removeItem('bit_draft_nueva'); } catch (e) {}
+      FOTO_PENDIENTE = null;
+      svBit('bit-fecha', new Date().toISOString().slice(0, 10)); svBit('bit-tit', ''); svBit('bit-txt', '');
+      const p = document.getElementById('bit-foto-top'); if (p) p.innerHTML = '';
+      const e = document.getElementById('bit-foto-estado'); if (e) e.textContent = '';
+      const h = document.getElementById('bit-draft-hint'); if (h) h.textContent = 'Borrador descartado.';
     }
 
     // Guarda temporalmente la foto reducida (lista para subir).
@@ -768,7 +824,7 @@
     function bitacoraPreviewFoto() {
       const input = document.getElementById('bit-foto');
       const estado = document.getElementById('bit-foto-estado');
-      const preview = document.getElementById('bit-foto-preview');
+      const preview = document.getElementById('bit-foto-top');
       if (!input.files || !input.files[0]) { FOTO_PENDIENTE = null; preview.innerHTML = ''; return; }
 
       const archivo = input.files[0];
@@ -792,9 +848,10 @@
           const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
           FOTO_PENDIENTE = dataUrl;
           // Previsualizar.
-          preview.innerHTML = '<img src="' + dataUrl + '" style="max-width:100%;border-radius:8px;border:1px solid #6b5528;">';
+          preview.innerHTML = '<div class="mini-pola"><img src="' + dataUrl + '"></div>';
           const kb = Math.round(dataUrl.length / 1024);
           estado.textContent = 'Foto lista (' + kb + ' KB aprox.)';
+          guardarBorradorNueva();
         };
         img.src = ev.target.result;
       };
@@ -830,7 +887,7 @@
           .then(function(r) { return r.json(); })
           .then(function(d) {
             guardandoBitacora = false;
-            if (d.ok) { FOTO_PENDIENTE = null; cerrarModal(); cargarBitacora(); }
+            if (d.ok) { FOTO_PENDIENTE = null; try { localStorage.removeItem('bit_draft_nueva'); } catch (e) {} cerrarModal(); cargarBitacora(); }
             else { msg.textContent = d.error || 'No se pudo guardar.'; }
           })
           .catch(function() { guardandoBitacora = false; msg.textContent = 'Sin señal.'; });
@@ -867,17 +924,47 @@
       if (!e) return;
       mostrarModal(
         '<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
-        '<h3>Editar entrada</h3>' +
-        '<label class="admin-etiqueta" style="text-align:left;display:block;">Fecha</label>' +
-        '<input type="date" id="bit-fecha" class="bit-input" value="' + e.fecha_iso + '">' +
-        '<label class="admin-etiqueta" style="text-align:left;display:block;">Título</label>' +
-        '<input type="text" id="bit-tit" class="bit-input" value="' + (e.titulo || '').replace(/"/g, '&quot;') + '">' +
-        '<label class="admin-etiqueta" style="text-align:left;display:block;">Texto</label>' +
-        '<textarea id="bit-txt" class="bit-input">' + (e.texto || '') + '</textarea>' +
-        '<button class="modal-btn" onclick="bitacoraGuardarEdicion(\'' + id + '\')">Guardar cambios</button>' +
-        '<button class="modal-btn secundario" onclick="cerrarModal()">Cancelar</button>' +
-        '<div id="bit-msg" class="admin-msg" style="text-align:center;"></div>'
+        '<div class="hoja">' +
+          '<div class="margen"></div>' +
+          '<input type="date" id="bit-fecha" class="h-fecha" value="' + e.fecha_iso + '" oninput="guardarBorradorEdit(\'' + id + '\')">' +
+          '<input type="text" id="bit-tit" class="h-titulo" placeholder="Título…" value="' + (e.titulo || '').replace(/"/g, '&quot;') + '" oninput="guardarBorradorEdit(\'' + id + '\')">' +
+          (e.media_ids ? '<div class="h-fotos"><div class="mini-pola" id="pola-' + e.id + '"><div class="pola-cargando">Revelando la foto…</div></div></div>' : '') +
+          '<textarea id="bit-txt" class="h-cuerpo" oninput="guardarBorradorEdit(\'' + id + '\')">' + (e.texto || '') + '</textarea>' +
+        '</div>' +
+        '<button class="bf-btn" onclick="bitacoraGuardarEdicion(\'' + id + '\')">Guardar cambios</button>' +
+        '<button class="bf-btn sec" onclick="cerrarModal()">Cerrar</button>' +
+        '<button class="bf-descartar" onclick="descartarBorradorEdit(\'' + id + '\')">Descartar cambios sin guardar</button>' +
+        '<div id="bit-draft-hint" class="bit-draft-hint"></div>' +
+        '<div id="bit-msg" class="admin-msg" style="text-align:center;color:#e0a0a0;"></div>'
       );
+      cargarBorradorEdit(id);
+      if (e.media_ids) cargarFotoPolaroid(e.id, e.media_ids);
+    }
+
+    function guardarBorradorEdit(id) {
+      if (bitDraftTimer) clearTimeout(bitDraftTimer);
+      bitDraftTimer = setTimeout(function() {
+        try {
+          localStorage.setItem('bit_draft_edit_' + id, JSON.stringify({ fecha: gvBit('bit-fecha'), titulo: gvBit('bit-tit'), texto: gvBit('bit-txt') }));
+          const h = document.getElementById('bit-draft-hint'); if (h) h.textContent = '✓ Guardado como borrador';
+        } catch (e) {}
+      }, 500);
+    }
+    function cargarBorradorEdit(id) {
+      try {
+        const raw = localStorage.getItem('bit_draft_edit_' + id); if (!raw) return;
+        const d = JSON.parse(raw);
+        if (d.fecha) svBit('bit-fecha', d.fecha);
+        if (d.titulo !== undefined) svBit('bit-tit', d.titulo);
+        if (d.texto !== undefined) svBit('bit-txt', d.texto);
+        const h = document.getElementById('bit-draft-hint'); if (h) h.textContent = 'Recuperamos cambios sin guardar.';
+      } catch (e2) {}
+    }
+    function descartarBorradorEdit(id) {
+      try { localStorage.removeItem('bit_draft_edit_' + id); } catch (e) {}
+      const ent = ENTRADAS_BITACORA.find(function(x) { return x.id === id; });
+      if (ent) { svBit('bit-fecha', ent.fecha_iso); svBit('bit-tit', ent.titulo || ''); svBit('bit-txt', ent.texto || ''); }
+      const h = document.getElementById('bit-draft-hint'); if (h) h.textContent = 'Volvimos a la versión guardada.';
     }
 
     function bitacoraGuardarEdicion(id) {
@@ -892,7 +979,7 @@
       fetch(URL_CEREBRO + '?accion=bitacora_editar&datos=' + encodeURIComponent(JSON.stringify(datos)))
         .then(function(r) { return r.json(); })
         .then(function(d) {
-          if (d.ok) { cerrarModal(); cargarBitacora(); }
+          if (d.ok) { try { localStorage.removeItem('bit_draft_edit_' + id); } catch (e) {} cerrarModal(); cargarBitacora(); }
           else { msg.textContent = d.error || 'No se pudo guardar.'; }
         })
         .catch(function() { msg.textContent = 'Sin señal.'; });
