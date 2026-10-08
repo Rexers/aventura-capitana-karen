@@ -166,28 +166,29 @@
         /* ==========================================================
        BITÁCORA (diseño sencillo; el cuaderno pirata va en el diseño final)
        ========================================================== */
-    .bit-nueva-btn {
-      width: 100%; padding: 14px; margin-bottom: 18px;
-      background: #c0392b; color: #fff; border: 1px solid #f4e4c1;
-      border-radius: 10px; font-size: 1rem; font-family: inherit; cursor: pointer;
-    }
-    .bit-entrada {
-      background: linear-gradient(135deg, #2a1d0e, #22160c);
-      border: 1px solid #8a6d3b; border-radius: 10px;
-      padding: 16px 18px; margin-bottom: 14px;
-    }
-    .bit-entrada .bit-fecha { font-size: 0.72rem; color: #cbb489; letter-spacing: 1px; text-transform: uppercase; }
-    .bit-entrada .bit-titulo { font-size: 1.15rem; color: #f4e4c1; margin: 4px 0 8px; }
-    .bit-entrada .bit-texto { font-size: 0.92rem; line-height: 1.6; opacity: 0.9; white-space: pre-wrap; }
-    .bit-entrada .bit-acciones { display: flex; gap: 8px; margin-top: 12px; }
-    .bit-mini {
-      background: transparent; border: 1px solid #6b5528; color: #cbb489;
-      border-radius: 6px; padding: 6px 12px; font-size: 0.78rem; font-family: inherit; cursor: pointer;
-    }
-    .bit-mini.borrar { border-color: #7a2a22; color: #e0a0a0; }
-    .bit-foto-cargando { font-size: 0.8rem; color: #cbb489; font-style: italic; opacity: 0.6; margin-top: 10px; }
-    .bit-foto-cont img { max-width: 100%; max-height: 320px; object-fit: cover; width: 100%; border-radius: 8px; border: 1px solid #6b5528; margin-top: 10px; }
+    .bit-nueva-btn { display: block; margin: 0 auto 18px; background: linear-gradient(180deg,#f0c353,#c6922a); color: #2a1a08; border: 1px solid #6e4a12; border-radius: 10px; padding: 12px 24px; font-family: 'Cinzel', serif; font-weight: 700; font-size: 0.92rem; cursor: pointer; box-shadow: 0 3px 7px rgba(0,0,0,.4); }
+    .bit-grid { display: flex; flex-wrap: wrap; gap: 14px; }
+    .nota { position: relative; width: calc(50% - 7px); background: linear-gradient(135deg,#f3e9cd,#e6d7b2); border: 1px solid #cbb489; border-radius: 4px; padding: 20px 14px 16px; box-shadow: 0 5px 12px rgba(0,0,0,.5); color: #4a3a1e; min-height: 148px; cursor: pointer; }
+    .nota::before { content: ""; position: absolute; top: -9px; left: 50%; transform: translateX(-50%) rotate(-3deg); width: 60px; height: 19px; background: rgba(214,196,140,.55); border: 1px solid rgba(160,140,90,.3); box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+    .nota .n-fecha { font-family: 'Cinzel', serif; font-size: 0.6rem; letter-spacing: 1.5px; text-transform: uppercase; color: #9c7a3e; }
+    .nota .n-tit { font-family: 'Kaushan', cursive; font-size: 1.22rem; color: #5a3d16; margin: 3px 0 6px; line-height: 1.05; }
+    .nota .n-prev { font-size: 0.78rem; line-height: 1.4; color: #6b5733; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .nota .n-foto { position: absolute; bottom: 7px; right: 9px; font-size: 0.85rem; }
     .bit-vacia { text-align: center; opacity: 0.6; font-style: italic; padding: 30px 10px; }
+    .bit-det { background: linear-gradient(135deg,#f3e9cd,#e6d7b2); border-radius: 6px; padding: 22px 20px; margin: 4px 0 0; color: #4a3a1e; text-align: center; }
+    .bit-det .det-fecha { font-family: 'Cinzel', serif; font-size: 0.68rem; letter-spacing: 2px; text-transform: uppercase; color: #9c7a3e; }
+    .bit-det .det-tit { font-family: 'Kaushan', cursive; font-size: 1.9rem; color: #5a3d16; margin: 2px 0 16px; line-height: 1.1; }
+    .polaroid { width: 82%; margin: 0 auto 16px; background: #fbf7ee; padding: 9px 9px 15px; box-shadow: 0 6px 14px rgba(0,0,0,.4); transform: rotate(-2.5deg); position: relative; border: 1px solid #e0d6c0; }
+    .polaroid img { width: 100%; display: block; }
+    .polaroid::before, .polaroid::after { content: ""; position: absolute; top: -9px; width: 52px; height: 20px; background: rgba(210,195,150,.5); border: 1px solid rgba(160,140,90,.25); }
+    .polaroid::before { left: 12px; transform: rotate(-8deg); }
+    .polaroid::after { right: 12px; transform: rotate(7deg); }
+    .pola-cargando { min-height: 150px; display: flex; align-items: center; justify-content: center; color: #9c7a3e; font-style: italic; font-size: 0.85rem; background: #e8dcc0; }
+    .bit-det .det-txt { font-size: 0.98rem; line-height: 1.7; color: #4a3a1e; white-space: pre-wrap; text-align: left; }
+    .det-acciones { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
+    .det-btn { background: rgba(120,80,30,.12); border: 1px solid #b08a4e; border-radius: 8px; padding: 8px 18px; font-family: 'Cinzel', serif; font-size: 0.8rem; color: #6b4a18; cursor: pointer; }
+    .det-btn.borrar { border-color: #b05a4a; color: #a0442e; }
+    .bit-foto-cargando { font-size: 0.8rem; color: #cbb489; font-style: italic; opacity: 0.6; margin-top: 10px; }
     /* Campos del editor de bitácora */
     .bit-input {
       width: 100%; padding: 12px; font-size: 0.95rem;
@@ -684,32 +685,56 @@
             cont.innerHTML = '<div class="bit-vacia">Tu diario está en blanco.<br>Escribe tu primera entrada, Capitana.</div>';
             return;
           }
-          let html = '';
+          // Guardar las entradas para abrirlas/editarlas.
+          ENTRADAS_BITACORA = d.entradas;
+          let html = '<div class="bit-grid">';
           d.entradas.forEach(function(e) {
-            const fotoHtml = e.media_ids
-              ? '<div class="bit-foto-cont" id="foto-' + e.id + '"><div class="bit-foto-cargando">Cargando foto…</div></div>'
-              : '';
+            const prev = (e.texto || '').replace(/</g, '&lt;');
+            const tit = (e.titulo || 'Sin título').replace(/</g, '&lt;');
             html +=
-              '<div class="bit-entrada">' +
-                '<div class="bit-fecha">' + e.fecha + '</div>' +
-                (e.titulo ? '<div class="bit-titulo">' + e.titulo + '</div>' : '') +
-                '<div class="bit-texto">' + e.texto + '</div>' +
-                fotoHtml +
-                '<div class="bit-acciones">' +
-                  '<button class="bit-mini" onclick="bitacoraEditar(\'' + e.id + '\')">Editar</button>' +
-                  '<button class="bit-mini borrar" onclick="bitacoraBorrar(\'' + e.id + '\')">Borrar</button>' +
-                '</div>' +
+              '<div class="nota" onclick="bitacoraAbrir(\'' + e.id + '\')">' +
+                '<div class="n-fecha">' + e.fecha + '</div>' +
+                '<div class="n-tit">' + tit + '</div>' +
+                '<div class="n-prev">' + prev + '</div>' +
+                (e.media_ids ? '<div class="n-foto">📷</div>' : '') +
               '</div>';
           });
+          html += '</div>';
           cont.innerHTML = html;
-          // Cargar las fotos (una por una, después de pintar el texto).
-          d.entradas.forEach(function(e) {
-            if (e.media_ids) cargarFotoEntrada(e.id, e.media_ids);
-          });
-          // Guardar las entradas para poder editarlas.
-          ENTRADAS_BITACORA = d.entradas;
         })
         .catch(function() { cont.innerHTML = '<div class="bit-vacia">La brújula perdió la señal.</div>'; });
+    }
+
+    // Abrir una entrada: muestra la página completa con la foto "pegada".
+    function bitacoraAbrir(id) {
+      const e = ENTRADAS_BITACORA.find(function(x) { return x.id === id; });
+      if (!e) return;
+      mostrarModal(
+        '<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
+        '<div class="bit-det">' +
+          '<div class="det-fecha">' + e.fecha + '</div>' +
+          '<div class="det-tit">' + (e.titulo || 'Sin título') + '</div>' +
+          (e.media_ids ? '<div class="polaroid" id="pola-' + e.id + '"><div class="pola-cargando">Revelando la foto…</div></div>' : '') +
+          '<div class="det-txt">' + (e.texto || '') + '</div>' +
+          '<div class="det-acciones">' +
+            '<button class="det-btn" onclick="bitacoraEditar(\'' + e.id + '\')">&#9998; Editar</button>' +
+            '<button class="det-btn borrar" onclick="bitacoraBorrar(\'' + e.id + '\')">&#128465; Borrar</button>' +
+          '</div>' +
+        '</div>'
+      );
+      if (e.media_ids) cargarFotoPolaroid(e.id, e.media_ids);
+    }
+
+    function cargarFotoPolaroid(idEntrada, driveId) {
+      fetch(URL_CEREBRO + '?accion=obtener_foto&drive_id=' + encodeURIComponent(driveId))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          const cont = document.getElementById('pola-' + idEntrada);
+          if (!cont) return;
+          if (d.ok) { cont.innerHTML = '<img src="' + d.data_url + '">'; }
+          else { cont.innerHTML = '<div class="pola-cargando">No se pudo cargar la foto.</div>'; }
+        })
+        .catch(function() {});
     }
 
     let ENTRADAS_BITACORA = [];
@@ -878,7 +903,7 @@
       fetch(URL_CEREBRO + '?accion=bitacora_borrar&id=' + encodeURIComponent(id))
         .then(function(r) { return r.json(); })
         .then(function(d) {
-          if (d.ok) cargarBitacora();
+          if (d.ok) { cerrarModal(); cargarBitacora(); }
           else alert(d.error || 'No se pudo borrar.');
         })
         .catch(function() { alert('Sin señal.'); });
