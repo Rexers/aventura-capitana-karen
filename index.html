@@ -34,8 +34,9 @@
     .barra-prog > div { background: #c0392b; height: 100%; width: 0%; transition: width 0.6s; }
     .cargando { opacity: 0.6; font-style: italic; }
     .accesos { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: -24px; position: relative; z-index: 1; }
-    .acceso { background: rgba(0,0,0,0.2); border: 1px solid #6b5528; border-radius: 10px; padding: 14px 8px; text-align: center; cursor: pointer; font-size: 0.85rem; }
-    .acceso .ic { font-size: 1.4rem; display: block; margin-bottom: 4px; }
+    .acceso { background: linear-gradient(180deg, rgba(44,28,13,.9), rgba(24,15,7,.94)); border: 2px solid #8a5e1e; border-radius: 12px; padding: 12px 6px; text-align: center; cursor: pointer; font-size: 0.8rem; color: #f0deae; font-family: 'Cinzel', serif; box-shadow: 0 4px 10px rgba(0,0,0,.45), inset 0 0 14px rgba(120,80,30,.25); }
+    .acceso .ic { display: block; margin-bottom: 5px; color: #e0c070; }
+    .acceso .ic svg { width: 30px; height: 30px; }
     .placeholder { text-align: center; opacity: 0.7; padding: 40px 10px; font-style: italic; }
     #p-mapa.activa { display: flex; flex-direction: column; position: fixed; top: env(safe-area-inset-top, 0px); left: 0; right: 0; bottom: 64px; margin: 0; max-width: none; z-index: 1; }
     #mapa-visor { flex: 1; overflow: hidden; position: relative; background: #0d1620; touch-action: none; }
@@ -263,11 +264,12 @@
     .admin-rew-estado { font-size: 0.72rem; color: #cbb489; }
     .admin-rew-btn { background: #3a5a40; color: #fff; border: 1px solid #6b8e6f; border-radius: 6px; padding: 6px 10px; font-size: 0.78rem; font-family: inherit; cursor: pointer; white-space: nowrap; }
     .admin-msg { font-size: 0.85rem; margin-top: 8px; min-height: 18px; }
-    #nav { display: flex; background: #14202c; border-top: 1px solid #3a2f1a; padding-bottom: env(safe-area-inset-bottom, 0px); }
-    .nav-btn { flex: 1; background: none; border: none; color: #cbb489; padding: 10px 4px; font-size: 0.72rem; font-family: inherit; cursor: pointer; opacity: 0.7; transition: opacity 0.2s, color 0.2s; }
-    .nav-btn .ic { font-size: 1.3rem; display: block; margin-bottom: 2px; }
-    .nav-btn.activa { opacity: 1; color: #f4e4c1; }
-    #menu-mas { display: none; position: fixed; bottom: 64px; left: 0; right: 0; background: #14202c; border-top: 1px solid #3a2f1a; padding: 8px; z-index: 10; }
+    #nav { display: flex; background: linear-gradient(180deg, #3c2714, #20140a); border-top: 2px solid #8a5e1e; box-shadow: 0 -4px 14px rgba(0,0,0,.5); padding-bottom: env(safe-area-inset-bottom, 0px); }
+    .nav-btn { flex: 1; background: none; border: none; color: #d8bd84; padding: 9px 4px 10px; font-size: 0.7rem; font-family: 'Cinzel', serif; cursor: pointer; opacity: 0.85; transition: opacity 0.2s, color 0.2s; }
+    .nav-btn .ic { display: block; margin-bottom: 3px; }
+    .nav-btn .ic svg { width: 25px; height: 25px; }
+    .nav-btn.activa { opacity: 1; color: #ffe29a; }
+    #menu-mas { display: none; position: fixed; bottom: 64px; left: 0; right: 0; background: linear-gradient(180deg, #3c2714, #20140a); border-top: 2px solid #8a5e1e; padding: 8px; z-index: 10; }
     #menu-mas.abierto { display: flex; justify-content: space-around; }
     #menu-mas button { background: none; border: none; color: #f4e4c1; font-family: inherit; font-size: 0.8rem; padding: 12px; cursor: pointer; }
     #menu-mas .ic { font-size: 1.4rem; display: block; margin-bottom: 4px; }
@@ -323,9 +325,9 @@
         <div id="mision" class="z z-mis">…</div>
       </div>
       <div class="accesos">
-        <div class="acceso" onclick="irA('archivo')"><span class="ic">📖</span>Archivo</div>
-        <div class="acceso" onclick="irA('inventario')"><span class="ic">🎒</span>Inventario</div>
-        <div class="acceso" onclick="irA('bitacora')"><span class="ic">📓</span>Bitácora</div>
+        <div class="acceso" onclick="irA('archivo')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 6c-2.5-1.5-5.5-1.5-8 0v13c2.5-1.5 5.5-1.5 8 0 2.5-1.5 5.5-1.5 8 0V6c-2.5-1.5-5.5-1.5-8 0z"/><path d="M12 6v13"/></svg></span>Archivo</div>
+        <div class="acceso" onclick="irA('inventario')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M7.5 9V7a4.5 4.5 0 0 1 9 0v2"/><rect x="4" y="9" width="16" height="11" rx="2"/><path d="M4 13h16"/></svg></span>Inventario</div>
+        <div class="acceso" onclick="irA('bitacora')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="6" y="3" width="13" height="18" rx="1.5"/><path d="M6 7a2 2 0 0 1 0-4M6 12a2 2 0 0 1 0-4M6 17a2 2 0 0 1 0-4"/><path d="M10 8h6M10 12h6"/></svg></span>Bitácora</div>
       </div>
     </section>
 
@@ -390,12 +392,12 @@
 
   <!-- Barra de navegación inferior -->
   <nav id="nav">
-    <button class="nav-btn activa" data-p="inicio" onclick="irA('inicio')"><span class="ic">🏠</span>Inicio</button>
-    <button class="nav-btn" data-p="mapa" onclick="irA('mapa')"><span class="ic">🗺️</span>Mapa</button>
-    <button class="nav-btn" data-p="misiones" onclick="irA('misiones')"><span class="ic">⚔️</span>Misiones</button>
-    <button class="nav-btn" id="nav-tesoro" data-p="tesoro" onclick="irA('tesoro')"><span class="ic">🪙</span>Tesoro</button>
-    <button class="nav-btn" id="nav-reservado" data-p="reservado" onclick="irA('reservado')" style="display:none;"><span class="ic">🕰️</span>Reservado</button>
-    <button class="nav-btn" data-p="mas" onclick="toggleMas()"><span class="ic">☰</span>Más</button>
+    <button class="nav-btn activa" data-p="inicio" onclick="irA('inicio')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8" stroke-linecap="round"/></svg></span>Inicio</button>
+    <button class="nav-btn" data-p="mapa" onclick="irA('mapa')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v16M15 6v16"/></svg></span>Mapa</button>
+    <button class="nav-btn" data-p="misiones" onclick="irA('misiones')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 4l11 11M19 4L8 15M4 19l4-4M20 19l-4-4"/></svg></span>Misiones</button>
+    <button class="nav-btn" id="nav-tesoro" data-p="tesoro" onclick="irA('tesoro')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M3 9a9 5 0 0 1 18 0v1H3z"/><rect x="3" y="10" width="18" height="8" rx="1"/><rect x="10.3" y="11.3" width="3.4" height="4.2" rx="0.5"/></svg></span>Tesoro</button>
+    <button class="nav-btn" id="nav-reservado" data-p="reservado" onclick="irA('reservado')" style="display:none;"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2" stroke-linecap="round"/></svg></span>Reservado</button>
+    <button class="nav-btn" data-p="mas" onclick="toggleMas()"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 8h14M5 12h14M5 16h14"/></svg></span>Más</button>
   </nav>
 
   <div id="modal-fondo" onclick="cerrarModalSiFondo(event)">
