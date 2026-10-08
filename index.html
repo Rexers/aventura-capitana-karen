@@ -181,6 +181,7 @@
     .nota .n-tit { font-family: 'Kaushan', cursive; font-size: 1.22rem; color: #5a3d16; margin: 3px 0 6px; line-height: 1.05; }
     .nota .n-prev { font-size: 0.78rem; line-height: 1.4; color: #6b5733; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
     .nota .n-foto { position: absolute; bottom: 7px; right: 9px; font-size: 0.85rem; }
+    .nota .n-pend { position: absolute; top: 6px; right: 8px; font-size: 0.56rem; color: #b0441f; font-weight: bold; letter-spacing: 0.3px; }
     .bit-vacia { text-align: center; opacity: 0.6; font-style: italic; padding: 30px 10px; }
     .bit-det { background: linear-gradient(135deg,#f3e9cd,#e6d7b2); border-radius: 6px; padding: 22px 20px; margin: 4px 0 0; color: #4a3a1e; text-align: center; }
     .bit-det .det-fecha { font-family: 'Cinzel', serif; font-size: 0.68rem; letter-spacing: 2px; text-transform: uppercase; color: #9c7a3e; }
@@ -705,50 +706,68 @@
       fetch(URL_CEREBRO + '?accion=bitacora_listar')
         .then(function(r) { return r.json(); })
         .then(function(d) {
-          if (!d.ok) { cont.innerHTML = '<div class="bit-vacia">No se pudo cargar.</div>'; return; }
-          if (!d.entradas.length) {
-            cont.innerHTML = '<div class="bit-vacia">Tu diario está en blanco.<br>Escribe tu primera entrada, Capitana.</div>';
-            return;
-          }
-          // Guardar las entradas para abrirlas/editarlas.
-          ENTRADAS_BITACORA = d.entradas;
-          let html = '<div class="bit-grid">';
-          d.entradas.forEach(function(e) {
-            const prev = (e.texto || '').replace(/</g, '&lt;');
-            const tit = (e.titulo || 'Sin título').replace(/</g, '&lt;');
-            html +=
-              '<div class="nota" onclick="bitacoraAbrir(\'' + e.id + '\')">' +
-                '<div class="n-fecha">' + e.fecha + '</div>' +
-                '<div class="n-tit">' + tit + '</div>' +
-                '<div class="n-prev">' + prev + '</div>' +
-                (e.media_ids ? '<div class="n-foto">📷</div>' : '') +
-              '</div>';
-          });
-          html += '</div>';
-          cont.innerHTML = html;
+          var servidor = (d && d.ok && d.entradas) ? d.entradas : [];
+          pintarBitacoraGrid(servidor, cont);
         })
-        .catch(function() { cont.innerHTML = '<div class="bit-vacia">La brújula perdió la señal.</div>'; });
+        .catch(function() { pintarBitacoraGrid([], cont); });
+    }
+    function pintarBitacoraGrid(servidor, cont) {
+      var todas = pendientesBitacora().concat(servidor);
+      ENTRADAS_BITACORA = todas;
+      if (!todas.length) {
+        cont.innerHTML = '<div class="bit-vacia">Tu diario está en blanco.<br>Escribe tu primera entrada, Capitana.</div>';
+        return;
+      }
+      var html = '<div class="bit-grid">';
+      todas.forEach(function(e) {
+        var prev = (e.texto || '').replace(/</g, '&lt;');
+        var tit = (e.titulo || 'Sin título').replace(/</g, '&lt;');
+        html +=
+          '<div class="nota" onclick="bitacoraAbrir(\'' + e.id + '\')">' +
+            (e.pendiente ? '<div class="n-pend">⏳ Sin subir</div>' : '') +
+            '<div class="n-fecha">' + e.fecha + '</div>' +
+            '<div class="n-tit">' + tit + '</div>' +
+            '<div class="n-prev">' + prev + '</div>' +
+            (e.media_ids ? '<div class="n-foto">📷</div>' : '') +
+          '</div>';
+      });
+      html += '</div>';
+      cont.innerHTML = html;
     }
 
     // Abrir una entrada: muestra la página completa con la foto "pegada".
     function bitacoraAbrir(id) {
       const e = ENTRADAS_BITACORA.find(function(x) { return x.id === id; });
       if (!e) return;
+      var fotoHtml = '';
+      if (e.pendiente) {
+        fotoHtml = e.foto_local ? '<div class="h-fotos"><div class="mini-pola"><img src="' + e.foto_local + '"></div></div>' : '';
+      } else if (e.media_ids) {
+        fotoHtml = '<div class="h-fotos"><div class="mini-pola" id="pola-' + e.id + '"><div class="pola-cargando">Revelando la foto…</div></div></div>';
+      }
+      var acciones = e.pendiente
+        ? '<div class="det-acciones"><button class="det-btn borrar" onclick="quitarPendiente(\'' + e.id + '\')">Quitar de la cola</button></div>' +
+          '<div style="text-align:center;color:#c9b081;font-size:0.76rem;margin-top:8px;font-style:italic;">⏳ Esta entrada se subirá sola al volver la señal.</div>'
+        : '<div class="det-acciones">' +
+            '<button class="det-btn" onclick="bitacoraEditar(\'' + e.id + '\')">&#9998; Editar</button>' +
+            '<button class="det-btn borrar" onclick="bitacoraBorrar(\'' + e.id + '\')">&#128465; Borrar</button>' +
+          '</div>';
       mostrarModal(
         '<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
         '<div class="hoja">' +
           '<div class="margen"></div>' +
           '<div class="h-fecha">' + e.fecha + '</div>' +
           '<div class="h-titulo h-titulo-ro">' + (e.titulo || 'Sin título') + '</div>' +
-          (e.media_ids ? '<div class="h-fotos"><div class="mini-pola" id="pola-' + e.id + '"><div class="pola-cargando">Revelando la foto…</div></div></div>' : '') +
+          fotoHtml +
           '<div class="h-cuerpo h-cuerpo-ro">' + (e.texto || '') + '</div>' +
-        '</div>' +
-        '<div class="det-acciones">' +
-          '<button class="det-btn" onclick="bitacoraEditar(\'' + e.id + '\')">&#9998; Editar</button>' +
-          '<button class="det-btn borrar" onclick="bitacoraBorrar(\'' + e.id + '\')">&#128465; Borrar</button>' +
-        '</div>'
+        '</div>' + acciones
       );
-      if (e.media_ids) cargarFotoPolaroid(e.id, e.media_ids);
+      if (!e.pendiente && e.media_ids) cargarFotoPolaroid(e.id, e.media_ids);
+    }
+    function quitarPendiente(tempId) {
+      if (!confirm('¿Quitar esta entrada de la cola? No se subirá.')) return;
+      COLA = COLA.filter(function (it) { return it.temp_id !== tempId; });
+      guardarCola(); actualizarAvisoCola(); cerrarModal(); cargarBitacora();
     }
 
     function cargarFotoPolaroid(idEntrada, driveId) {
@@ -889,6 +908,9 @@
       // A partir de aquí, bloquear para evitar duplicados.
       guardandoBitacora = true;
 
+      // Sin señal: guardar en la cola y subir solo cuando vuelva.
+      if (!hayInternet()) { guardarBitacoraOffline(datos); return; }
+
       // Función que crea la entrada (con o sin foto ya subida).
       function crearEntrada(mediaId) {
         if (mediaId) datos.media_ids = mediaId;
@@ -899,7 +921,7 @@
             if (d.ok) { FOTO_PENDIENTE = null; try { localStorage.removeItem('bit_draft_nueva'); } catch (e) {} cerrarModal(); cargarBitacora(); }
             else { msg.textContent = d.error || 'No se pudo guardar.'; }
           })
-          .catch(function() { guardandoBitacora = false; msg.textContent = 'Sin señal.'; });
+          .catch(function() { guardarBitacoraOffline(datos); });
       }
 
       // Si hay foto, subirla primero (por POST).
@@ -920,11 +942,27 @@
               msg.textContent = d.error || 'No se pudo subir la foto.';
             }
           })
-          .catch(function() { guardandoBitacora = false; msg.textContent = 'Sin señal al subir la foto.'; });
+          .catch(function() { guardarBitacoraOffline(datos); });
       } else {
         msg.textContent = 'Guardando…';
         crearEntrada(null);
       }
+    }
+
+    // Guarda la entrada en la cola local (sin señal) para subirla después.
+    function guardarBitacoraOffline(datos) {
+      var limpio = { fecha: datos.fecha, titulo: datos.titulo, texto: datos.texto };
+      var temp = 'pend_' + Date.now();
+      if (FOTO_PENDIENTE) {
+        encolar({ tipoBit: 'foto', foto: FOTO_PENDIENTE, datos: limpio, fechaTxt: fechaLocalTxt(limpio.fecha), temp_id: temp });
+      } else {
+        encolar({ tipoBit: 'texto', datos: limpio, fechaTxt: fechaLocalTxt(limpio.fecha), temp_id: temp,
+                  url: URL_CEREBRO + '?accion=bitacora_crear&datos=' + encodeURIComponent(JSON.stringify(limpio)) });
+      }
+      FOTO_PENDIENTE = null; guardandoBitacora = false;
+      try { localStorage.removeItem('bit_draft_nueva'); } catch (e) {}
+      cerrarModal(); cargarBitacora();
+      mostrarToast('Guardado sin señal · se subirá al volver ⏳');
     }
 
     // Abrir el editor para EDITAR una entrada existente.
@@ -1238,8 +1276,13 @@
         })
         .catch(function() {
           canjeando = false;
-          mostrarModal('<h3>La brújula perdió la señal</h3><p>Intenta nuevamente.</p>' +
-            '<button class="modal-btn secundario" onclick="cerrarModal()">Cerrar</button>');
+          var r = LISTA_RECOMPENSAS.find(function(x) { return x.id === idRecompensa; });
+          encolar({ accion: 'canjear', id: idRecompensa, costo: r ? Number(r.costo) : 0,
+                    url: URL_CEREBRO + '?accion=canjear&id=' + encodeURIComponent(idRecompensa) });
+          mostrarModal('<h3>Sin señal 🧭</h3>' +
+            '<p>Guardamos tu canje' + (r ? ' de <strong>' + r.nombre + '</strong>' : '') +
+            '. Se confirmará solo cuando vuelva la cobertura.</p>' +
+            '<button class="modal-btn cel-boton" onclick="cerrarModalYRefrescar()">Entendido</button>');
         });
     }
     function celebrarCanje(d) {
@@ -1316,8 +1359,11 @@
         })
         .catch(function() {
           descubriendo = false;
-          mostrarModal('<h3>La brújula perdió la señal</h3><p>Intenta nuevamente en un momento.</p>' +
-            '<button class="modal-btn secundario" onclick="cerrarModal()">Cerrar</button>');
+          encolar({ accion: 'descubrir', id: idTerritorio,
+                    url: URL_CEREBRO + '?accion=descubrir&id=' + encodeURIComponent(idTerritorio) });
+          mostrarModal('<div class="cel-titulo">¡Llegada registrada! 📍</div>' +
+            '<p style="text-align:center;padding:0 10px;">Estás sin señal, Capitana. Marcamos tu llegada a este territorio. El descubrimiento y tus Berries se confirmarán solos apenas vuelva la cobertura.</p>' +
+            '<button class="modal-btn cel-boton" onclick="cerrarModalYRefrescar()">¡Entendido!</button>');
         });
     }
     function celebrarDescubrimiento(d) {
@@ -1975,15 +2021,115 @@
     }
     
     // ===== CARGA INICIAL Y ACCESO SECRETO =====
+    // ============ OFFLINE: cola de acciones pendientes ============
+    function hayInternet() { return navigator.onLine !== false; }
+    function cargarCola() { try { return JSON.parse(localStorage.getItem('cola_offline') || '[]'); } catch (e) { return []; } }
+    let COLA = cargarCola();
+    function guardarCola() { try { localStorage.setItem('cola_offline', JSON.stringify(COLA)); } catch (e) {} }
+    function encolar(item) {
+      item.op = 'op_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+      COLA.push(item); guardarCola(); actualizarAvisoCola();
+    }
+    function fechaLocalTxt(iso) {
+      if (!iso) return '';
+      var p = String(iso).split('-'); return (p.length === 3) ? (p[2] + '/' + p[1] + '/' + p[0]) : iso;
+    }
+    // Entradas de bitácora aún no sincronizadas (para mostrarlas igual).
+    function pendientesBitacora() {
+      return COLA.filter(function (it) { return it.tipoBit; }).map(function (it) {
+        return { id: it.temp_id, fecha: it.fechaTxt, fecha_iso: it.datos.fecha,
+                 titulo: it.datos.titulo, texto: it.datos.texto,
+                 media_ids: it.foto ? 'LOCAL' : '', foto_local: it.foto || '', pendiente: true };
+      }).reverse();
+    }
+    // Aplica al "estado" los cambios offline que faltan por subir.
+    function aplicarPendientesLocales(estado) {
+      if (!estado) return;
+      COLA.forEach(function (it) {
+        if (it.accion === 'descubrir' && estado.territorios) {
+          for (var i = 0; i < estado.territorios.length; i++) {
+            if (estado.territorios[i].id === it.id) {
+              estado.territorios[i].estado = 'descubierto';
+              if (estado.territorios[i + 1] && estado.territorios[i + 1].estado === 'bloqueado') {
+                estado.territorios[i + 1].estado = 'disponible';
+              }
+            }
+          }
+          if (estado.progreso) {
+            estado.progreso.descubiertos = Math.min(estado.progreso.total, (estado.progreso.descubiertos || 0) + 1);
+            estado.progreso.porcentaje = Math.round(estado.progreso.descubiertos / estado.progreso.total * 100);
+          }
+        }
+        if (it.accion === 'canjear' && estado.recompensas) {
+          for (var j = 0; j < estado.recompensas.length; j++) {
+            if (estado.recompensas[j].id === it.id) { estado.recompensas[j].estado = 'canjeada'; }
+          }
+          if (typeof estado.berries === 'number') { estado.berries = Math.max(0, estado.berries - (it.costo || 0)); }
+        }
+      });
+    }
+    // Envía un item al servidor. Promise<bool>: true = ya no reintentar.
+    function enviarItem(it) {
+      if (it.tipoBit === 'foto') {
+        var cuerpo = new URLSearchParams();
+        cuerpo.append('accion', 'subir_foto'); cuerpo.append('foto', it.foto);
+        cuerpo.append('nombre', 'bitacora_' + Date.now() + '.jpg');
+        return fetch(URL_CEREBRO, { method: 'POST', body: cuerpo }).then(function (r) { return r.json(); })
+          .then(function (d) {
+            var datos = { fecha: it.datos.fecha, titulo: it.datos.titulo, texto: it.datos.texto };
+            if (d && d.ok) { datos.media_ids = d.drive_id; }
+            return fetch(URL_CEREBRO + '?accion=bitacora_crear&datos=' + encodeURIComponent(JSON.stringify(datos)))
+              .then(function (r) { return r.json(); }).then(function () { return true; });
+          }).catch(function () { return false; });
+      }
+      return fetch(it.url).then(function (r) { return r.json(); }).then(function () { return true; }).catch(function () { return false; });
+    }
+    let sincronizando = false;
+    function sincronizarCola() {
+      if (sincronizando || !COLA.length || !hayInternet()) return;
+      sincronizando = true;
+      (function siguiente() {
+        if (!COLA.length) { sincronizando = false; actualizarAvisoCola(); reconciliar(); return; }
+        enviarItem(COLA[0]).then(function (ok) {
+          if (ok) { COLA.shift(); guardarCola(); actualizarAvisoCola(); siguiente(); }
+          else { sincronizando = false; }
+        });
+      })();
+    }
+    function reconciliar() {
+      cargarEstado();
+      if (document.getElementById('bitacora-lista')) cargarBitacora();
+      mostrarToast('Sincronizado con la nube ✓');
+    }
+    function actualizarAvisoCola() {
+      var el = document.getElementById('aviso-cola');
+      if (!el) {
+        el = document.createElement('div'); el.id = 'aviso-cola';
+        el.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:84px;z-index:60;background:#2a1a0c;color:#f0d78a;border:1px solid #8a5e1e;border-radius:20px;padding:7px 16px;font-size:0.78rem;box-shadow:0 4px 12px rgba(0,0,0,.5);display:none;';
+        document.body.appendChild(el);
+      }
+      if (COLA.length) { el.textContent = '⏳ ' + COLA.length + ' por sincronizar'; el.style.display = 'block'; }
+      else { el.style.display = 'none'; }
+    }
+    function mostrarToast(txt) {
+      var t = document.createElement('div');
+      t.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:120px;z-index:70;background:#2e4a2e;color:#e8f5e8;border:1px solid #6b8e6f;border-radius:20px;padding:9px 18px;font-size:0.85rem;box-shadow:0 4px 12px rgba(0,0,0,.5);';
+      t.textContent = txt; document.body.appendChild(t);
+      setTimeout(function () { t.style.transition = 'opacity .5s'; t.style.opacity = '0'; }, 2500);
+      setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 3100);
+    }
+    window.addEventListener('online', function () { sincronizarCola(); });
+
     function cargarEstado() {
       fetch(URL_CEREBRO + '?accion=estado')
         .then(function(r) { return r.json(); })
         .then(function(d) {
-          if (d.ok) { pintarEstado(d.estado); } else { mostrarError(); }
+          if (d.ok) { aplicarPendientesLocales(d.estado); pintarEstado(d.estado); sincronizarCola(); } else { mostrarError(); }
         })
         .catch(function() { mostrarError(); });
     }
     cargarEstado();
+    actualizarAvisoCola();
     (function() {
       var emblema = document.getElementById('emblema');
       if (emblema) emblema.addEventListener('click', registrarToqueEmblema);
