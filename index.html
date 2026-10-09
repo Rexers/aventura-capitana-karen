@@ -204,6 +204,23 @@
     @keyframes g5-dots { 0%{content:'';} 25%{content:'·';} 50%{content:'· ·';} 75%{content:'· · ·';} }
     .g5-flag { font-size: 3rem; display: block; margin: 20px auto 0; width: -webkit-fit-content; width: fit-content; animation: g5-wave 2.4s ease-in-out infinite; transform-origin: bottom center; }
     @keyframes g5-wave { 0%,100%{transform: rotate(-6deg);} 50%{transform: rotate(6deg);} }
+    /* Botón de arme (solo visible para el Primer Oficial / Karen en el momento) */
+    .g5-armar { display: block; width: 100%; max-width: 360px; margin: 26px auto 0; padding: 15px;
+      border-radius: 12px; border: 1px solid #7a5aa8; cursor: pointer;
+      font-family: 'Cinzel', serif; font-weight: 700; font-size: 1rem; letter-spacing: 1px; color: #f1e4ff;
+      background: linear-gradient(180deg,#5a2f9a,#3a1d6a); box-shadow: 0 5px 16px rgba(0,0,0,.5), 0 0 22px rgba(123,75,216,.4); }
+    .g5-armar:active { transform: translateY(1px); }
+    /* Victoria (dorado triunfal) */
+    .g5-hero.win { background: radial-gradient(circle at 50% 40%, #7a5416, #2e2008 66%, #140d04); border-color: #c6922a;
+      box-shadow: 0 10px 30px rgba(0,0,0,.6), inset 0 0 70px rgba(240,200,90,.32); }
+    .g5-hero.win .g5-ray { background: radial-gradient(circle, rgba(255,220,120,.55), transparent 62%); }
+    .g5-win-wm { position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%); z-index: 1; text-align: center; }
+    .g5-win-wm .g5-g5 { font-family: 'Cinzel', serif; font-size: 3rem; font-weight: 700; color: #ffe9a6; letter-spacing: 4px; text-shadow: 0 0 28px rgba(255,210,110,.75), 0 2px 6px #000; }
+    .g5-win-wm .g5-desp { font-family: 'Cinzel', serif; font-size: 0.8rem; letter-spacing: 5px; color: #f0d78a; margin-top: 8px; }
+    .g5-estado.win { color: #ffd98a; border-color: #e8c24a; background: rgba(232,194,74,.14); box-shadow: 0 0 18px rgba(232,194,74,.35); }
+    .g5-estado.win b { color: #7bd88a; }
+    .g5-camiseta { margin: 8px auto 20px; max-width: 300px; font-size: 0.86rem; color: #cbb489; font-style: italic;
+      border: 1px dashed #8a6d3b; border-radius: 12px; padding: 18px 16px; }
 
         /* ==========================================================
        BITÁCORA (diseño sencillo; el cuaderno pirata va en el diseño final)
@@ -504,7 +521,8 @@
 
           <div class="admin-seccion">
             <div class="admin-seccion-tit">El Despertar · Gear 5</div>
-            <p class="admin-nota" style="margin-bottom:10px;">Solo se ve el 17 de octubre. Reinicia la secuencia de Kaido a la primera pantalla, como si Karen no hubiera dado la orden. Para pruebas.</p>
+            <p class="admin-nota" style="margin-bottom:10px;">En el momento de la celebración (17 oct), toca <b>Armar victoria</b>: en la pantalla del Despertar aparecerá el botón "⚔️ Anunciar victoria" para que lo toque la Capitana. "Reiniciar" vuelve todo a la primera pantalla de Kaido (pruebas).</p>
+            <button class="admin-btn-mini" onclick="gear5Armar()" style="background:#5a2f9a;margin-bottom:8px;">⚔️ Armar victoria</button>
             <button class="admin-btn-mini" onclick="gear5Reset()">Reiniciar El Despertar</button>
           </div>
 
@@ -647,6 +665,7 @@
         RESERVADO_VISITADO = true;
         var nr = document.getElementById('nav-reservado');
         if (nr) nr.classList.remove('nuevo');
+        if (typeof pintarReservado === 'function') pintarReservado();
       }
       document.querySelectorAll('.pantalla').forEach(function(p) { p.classList.remove('activa'); });
       var destino = document.getElementById('p-' + nombre);
@@ -2081,8 +2100,32 @@
       if (h2) h2.style.display = 'none';
       const fase = g5Fase();
 
+      // Fase 4: VICTORIA · El Despertar (texto PROVISIONAL, se cambia luego).
+      if (fase === 'victoria') {
+        cont.innerHTML =
+          '<div class="g5">' +
+            '<div class="g5-hero win">' +
+              '<div class="g5-ray"></div>' +
+              '<div class="g5-win-wm"><div class="g5-g5">GEAR 5</div><div class="g5-desp">EL DESPERTAR</div></div>' +
+              '<div class="g5-vine"></div>' +
+            '</div>' +
+            '<div class="g5-estado win">ESTADO DEL ENEMIGO: <b>DERROTADO</b></div>' +
+            '<div class="g5-narr" style="color:#f1e3c2;">' +
+              '<p>Capitana, has pasado esta aventura descubriendo nuevos territorios. Pero hay algo que ningún mapa podía mostrarte: no necesitas convertirte en alguien extraordinario para merecer que tu día sea extraordinario.</p>' +
+              '<p>Siempre has sabido hacer sentir protagonistas a las personas que quieres. Ahora te toca descubrir lo que ocurre cuando te permites recibir esa misma ilusión.</p>' +
+              '<p>No porque hayas completado todas las misiones. No porque hayas demostrado nada. Simplemente porque tú también mereces vivir tu propia aventura.</p>' +
+              '<p>El mundo no necesita que seas otra persona. Esta vez, solo tienes que permitirte ser la protagonista.</p>' +
+            '</div>' +
+            '<div class="g5-camiseta">👕 Aquí se revela la camiseta Gear 5 (contenido por definir).</div>' +
+          '</div>';
+        setTimeout(lanzarDestellos, 250);
+        return;
+      }
+
       // Fase 3: orden dada → confirmación breve + espera.
       if (fase === 'orden_dada') {
+        let armada = false;
+        try { armada = localStorage.getItem('gear5_armada') === '1'; } catch (e) {}
         cont.innerHTML =
           '<div class="g5"><div class="g5-conf">' +
             '<div class="g5-ack">¡ORDEN RECIBIDA, CAPITANA!</div>' +
@@ -2090,6 +2133,7 @@
             '<p>Prepárate. El último arco está a punto de comenzar.</p>' +
             '<span class="g5-flag">🏴‍☠️</span>' +
             '<div class="g5-wait">Esperando a la tripulación</div>' +
+            (armada ? '<button class="g5-armar" onclick="gear5Victoria()">⚔️ Anunciar victoria</button>' : '') +
           '</div></div>';
         return;
       }
@@ -2133,9 +2177,22 @@
 
     function gear5Reunir() { g5SetFase('reuniendo'); pintarDespertar(); const c = document.getElementById('contenido'); if (c) c.scrollTop = 0; }
     function gear5Ordenar() { g5SetFase('orden_dada'); pintarDespertar(); const c = document.getElementById('contenido'); if (c) c.scrollTop = 0; }
+    function gear5Victoria() {
+      try { localStorage.removeItem('gear5_armada'); } catch (e) {}
+      g5SetFase('victoria'); pintarDespertar();
+      const c = document.getElementById('contenido'); if (c) c.scrollTop = 0;
+    }
+    // Admin: arma el botón de victoria para que la Capitana lo toque en el momento.
+    function gear5Armar() {
+      try { localStorage.setItem('gear5_armada', '1'); } catch (e) {}
+      if (g5Fase() !== 'orden_dada') { g5SetFase('orden_dada'); }
+      if (COUNTDOWN_DATA && COUNTDOWN_DATA.hoy && COUNTDOWN_DATA.hoy.fecha === '2026-10-17') { pintarDespertar(); }
+      alert('✔ Botón de victoria ARMADO.\n\nEn la pantalla del Despertar ya aparece "⚔️ Anunciar victoria". Déjaselo listo a la Capitana para que lo toque ella en el momento.');
+    }
     function gear5Reset() {
       if (!confirm('¿Reiniciar El Despertar?\n\nVuelve a la primera pantalla de Kaido (como si Karen no hubiera dado ninguna orden). Útil para pruebas.')) return;
       g5SetFase('');
+      try { localStorage.removeItem('gear5_armada'); } catch (e) {}
       if (COUNTDOWN_DATA && COUNTDOWN_DATA.hoy && COUNTDOWN_DATA.hoy.fecha === '2026-10-17') { pintarDespertar(); }
       alert('✔ El Despertar reiniciado a la primera pantalla.');
     }
