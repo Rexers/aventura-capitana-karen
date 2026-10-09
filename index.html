@@ -170,6 +170,41 @@
       box-shadow: 0 0 24px rgba(232,194,74,0.25);
     }
 
+    /* ============ GEAR 5 · EL DESPERTAR (batalla final · 17 oct) ============ */
+    .g5 { text-align: center; animation: g5-fade 0.8s ease; }
+    @keyframes g5-fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    .g5-hero {
+      position: relative; width: 100%; height: 300px; border-radius: 16px; overflow: hidden;
+      margin-bottom: 22px; border: 1px solid #5a3a8a;
+      background: radial-gradient(circle at 50% 36%, #4a1f7a, #1c0d33 68%, #0c0618);
+      box-shadow: 0 10px 30px rgba(0,0,0,.6), inset 0 0 60px rgba(123,75,216,.25);
+    }
+    .g5-hero img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+    .g5-hero .g5-vine { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, rgba(12,6,24,0) 45%, rgba(12,6,24,.85)); pointer-events: none; }
+    .g5-hero .g5-ray { position: absolute; top: -40%; left: 50%; width: 150%; height: 190%; transform: translateX(-50%);
+      background: radial-gradient(circle, rgba(157,107,255,.38), transparent 60%); animation: g5-pulse 4s ease-in-out infinite; pointer-events: none; }
+    @keyframes g5-pulse { 0%,100% { opacity: .5; } 50% { opacity: 1; } }
+    .g5-title { font-family: 'Cinzel', serif; font-size: 2rem; font-weight: 700; letter-spacing: 2px; color: #f1e4ff; margin: 4px 0 6px; text-shadow: 0 2px 6px #000, 0 0 22px rgba(157,107,255,.6); }
+    .g5-sub { font-family: 'Cinzel', serif; font-size: 0.82rem; letter-spacing: 3px; text-transform: uppercase; color: #b58aff; margin-bottom: 20px; }
+    .g5-narr { font-size: 1rem; line-height: 1.8; color: #e9ddc6; text-align: left; margin: 0 2px 22px; }
+    .g5-narr p { margin: 0 0 14px; }
+    .g5-estado { display: inline-block; font-family: 'Cinzel', serif; font-size: 0.8rem; letter-spacing: 2px; color: #d9b8ff;
+      background: rgba(123,75,216,.16); border: 1px solid #7b4bd8; border-radius: 20px; padding: 9px 22px; margin-bottom: 22px;
+      box-shadow: 0 0 18px rgba(123,75,216,.3); animation: g5-pulse 2.6s ease-in-out infinite; }
+    .g5-estado b { color: #ff6b5a; letter-spacing: 3px; }
+    .g5-btn { display: block; width: 100%; max-width: 360px; margin: 0 auto; padding: 17px;
+      border-radius: 12px; border: 1px solid #6e4a12; cursor: pointer;
+      font-family: 'Cinzel', serif; font-weight: 700; font-size: 1.05rem; letter-spacing: 1px; color: #2a1a08;
+      background: linear-gradient(180deg,#f3cf63,#c6922a); box-shadow: 0 5px 16px rgba(0,0,0,.5), 0 0 22px rgba(240,200,90,.35); }
+    .g5-btn:active { transform: translateY(1px); }
+    .g5-conf { font-size: 1.05rem; line-height: 1.8; color: #e9ddc6; margin: 0 2px; }
+    .g5-conf .g5-ack { font-family: 'Cinzel', serif; font-size: 1.3rem; color: #f3cf63; letter-spacing: 1px; margin-bottom: 14px; text-shadow: 0 0 14px rgba(240,200,90,.4); }
+    .g5-wait { font-family: 'Cinzel', serif; font-size: 0.95rem; letter-spacing: 2px; text-transform: uppercase; color: #b58aff; margin-top: 26px; }
+    .g5-wait::after { content: ''; animation: g5-dots 1.6s steps(1,end) infinite; }
+    @keyframes g5-dots { 0%{content:'';} 25%{content:'·';} 50%{content:'· ·';} 75%{content:'· · ·';} }
+    .g5-flag { font-size: 3rem; display: block; margin: 20px auto 0; width: -webkit-fit-content; width: fit-content; animation: g5-wave 2.4s ease-in-out infinite; transform-origin: bottom center; }
+    @keyframes g5-wave { 0%,100%{transform: rotate(-6deg);} 50%{transform: rotate(6deg);} }
+
         /* ==========================================================
        BITÁCORA (diseño sencillo; el cuaderno pirata va en el diseño final)
        ========================================================== */
@@ -465,6 +500,12 @@
             <div class="admin-seccion-tit">Diario de Karen</div>
             <p class="admin-nota" style="margin-bottom:10px;">Si Karen olvidó la contraseña de su diario, esto la borra (en este teléfono) para que pueda crear una nueva. No borra ninguna entrada.</p>
             <button class="admin-btn-mini" onclick="resetPassDiario()">Restablecer contraseña del diario</button>
+          </div>
+
+          <div class="admin-seccion">
+            <div class="admin-seccion-tit">El Despertar · Gear 5</div>
+            <p class="admin-nota" style="margin-bottom:10px;">Solo se ve el 17 de octubre. Reinicia la secuencia de Kaido a la primera pantalla, como si Karen no hubiera dado la orden. Para pruebas.</p>
+            <button class="admin-btn-mini" onclick="gear5Reset()">Reiniciar El Despertar</button>
           </div>
 
           <div class="admin-seccion">
@@ -2027,10 +2068,93 @@
       '</g>' +
       '</svg>';
 
+    // ============ GEAR 5 · EL DESPERTAR (17 de octubre) ============
+    // La app es solo el gatillo: Karen cree que convoca a su tripulación para
+    // la batalla final. La sorpresa real ocurre en persona, no en la pantalla.
+    function g5Fase() { try { return localStorage.getItem('gear5_fase') || ''; } catch (e) { return ''; } }
+    function g5SetFase(f) { try { if (f) localStorage.setItem('gear5_fase', f); else localStorage.removeItem('gear5_fase'); } catch (e) {} }
+
+    function pintarDespertar() {
+      const cont = document.getElementById('reservado-contenido');
+      if (!cont) return;
+      const h2 = document.querySelector('#p-reservado h2');
+      if (h2) h2.style.display = 'none';
+      const fase = g5Fase();
+
+      // Fase 3: orden dada → confirmación breve + espera.
+      if (fase === 'orden_dada') {
+        cont.innerHTML =
+          '<div class="g5"><div class="g5-conf">' +
+            '<div class="g5-ack">¡ORDEN RECIBIDA, CAPITANA!</div>' +
+            '<p>Tu Primer Oficial ha recibido las instrucciones. La tripulación será reunida para el enfrentamiento final.</p>' +
+            '<p>Prepárate. El último arco está a punto de comenzar.</p>' +
+            '<span class="g5-flag">🏴‍☠️</span>' +
+            '<div class="g5-wait">Esperando a la tripulación</div>' +
+          '</div></div>';
+        return;
+      }
+
+      // Fase 2: la orden de la Capitana.
+      if (fase === 'reuniendo') {
+        cont.innerHTML =
+          '<div class="g5">' +
+            '<div class="g5-title" style="font-size:1.55rem;">¡CAPITANA, ESPERAMOS TUS ÓRDENES!</div>' +
+            '<div class="g5-narr" style="margin-top:20px;">' +
+              '<p>La batalla final no puede comenzar todavía.</p>' +
+              '<p>Antes de avanzar, necesitas asegurarte de que tu tripulación esté preparada para el último enfrentamiento.</p>' +
+              '<p>Tu Primer Oficial está a la espera de instrucciones. Como Capitana, solo tú puedes dar la orden que pondrá en marcha esta última fase de la aventura.</p>' +
+              '<p style="text-align:center;color:#d9b8ff;font-family:\'Cinzel\',serif;letter-spacing:1px;">¿Qué ordenas?</p>' +
+            '</div>' +
+            '<button class="g5-btn" onclick="gear5Ordenar()">ORDENAR AL PRIMER OFICIAL</button>' +
+          '</div>';
+        return;
+      }
+
+      // Fase 1 (inicial): Kaido Monotonía, invicto.
+      cont.innerHTML =
+        '<div class="g5">' +
+          '<div class="g5-hero">' +
+            '<div class="g5-ray"></div>' +
+            '<img src="kaido.png" alt="" onerror="this.style.display=\'none\'">' +
+            '<div class="g5-vine"></div>' +
+          '</div>' +
+          '<div class="g5-title">KAIDO MONOTONÍA</div>' +
+          '<div class="g5-sub">El enemigo del último arco</div>' +
+          '<div class="g5-narr">' +
+            '<p>Capitana, has llegado al último territorio de esta expedición.</p>' +
+            '<p>Todo viaje tiene un último obstáculo. Y esta vez, el enemigo que te espera no podrá vencerse con un mapa ni con las recompensas que has reunido.</p>' +
+            '<p>Kaido Monotonía sigue en pie. Pero incluso el enemigo más poderoso debe enfrentarse a algo que no puede controlar: una Capitana que ha llegado hasta aquí y una tripulación que todavía tiene una última misión por cumplir.</p>' +
+            '<p>Ha llegado el momento de dar tu siguiente orden.</p>' +
+          '</div>' +
+          '<div class="g5-estado">ESTADO DEL ENEMIGO: <b>INVICTO</b></div>' +
+          '<button class="g5-btn" onclick="gear5Reunir()">REUNIR TRIPULACIÓN</button>' +
+        '</div>';
+    }
+
+    function gear5Reunir() { g5SetFase('reuniendo'); pintarDespertar(); const c = document.getElementById('contenido'); if (c) c.scrollTop = 0; }
+    function gear5Ordenar() { g5SetFase('orden_dada'); pintarDespertar(); const c = document.getElementById('contenido'); if (c) c.scrollTop = 0; }
+    function gear5Reset() {
+      if (!confirm('¿Reiniciar El Despertar?\n\nVuelve a la primera pantalla de Kaido (como si Karen no hubiera dado ninguna orden). Útil para pruebas.')) return;
+      g5SetFase('');
+      if (COUNTDOWN_DATA && COUNTDOWN_DATA.hoy && COUNTDOWN_DATA.hoy.fecha === '2026-10-17') { pintarDespertar(); }
+      alert('✔ El Despertar reiniciado a la primera pantalla.');
+    }
+
     // Pinta el contenido del Archivo Reservado.
     function pintarReservado() {
       const cont = document.getElementById('reservado-contenido');
       if (!cont) return;
+
+      // Restaurar el título (El Despertar lo oculta para la escena cinematográfica).
+      const h2res = document.querySelector('#p-reservado h2');
+      if (h2res) h2res.style.display = '';
+
+      // 17 de octubre: El Despertar toma el control de toda la pantalla.
+      if (ARCHIVO_RESERVADO.desbloqueado && COUNTDOWN_DATA && COUNTDOWN_DATA.fase === 'activo'
+          && COUNTDOWN_DATA.hoy && COUNTDOWN_DATA.hoy.fecha === '2026-10-17') {
+        pintarDespertar();
+        return;
+      }
 
       // Si aún no está desbloqueado: mostrar el candado.
       if (!ARCHIVO_RESERVADO.desbloqueado) {
