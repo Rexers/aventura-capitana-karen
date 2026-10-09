@@ -174,6 +174,7 @@
        BITÁCORA (diseño sencillo; el cuaderno pirata va en el diseño final)
        ========================================================== */
     .bit-nueva-btn { display: block; margin: 0 auto 18px; background: linear-gradient(180deg,#f0c353,#c6922a); color: #2a1a08; border: 1px solid #6e4a12; border-radius: 10px; padding: 12px 24px; font-family: 'Cinzel', serif; font-weight: 700; font-size: 0.92rem; cursor: pointer; box-shadow: 0 3px 7px rgba(0,0,0,.4); }
+    .bit-poner-pass { display: block; margin: -8px auto 18px; background: transparent; color: #e0c070; border: 1px solid #8a5e1e; border-radius: 20px; padding: 7px 18px; font-family: 'Cinzel', serif; font-size: 0.76rem; letter-spacing: 0.5px; cursor: pointer; }
     .bit-grid { display: flex; flex-wrap: wrap; gap: 14px; }
     .nota { position: relative; width: calc(50% - 7px); background: linear-gradient(135deg,#f3e9cd,#e6d7b2); border: 1px solid #cbb489; border-radius: 4px; padding: 20px 14px 16px; box-shadow: 0 5px 12px rgba(0,0,0,.5); color: #4a3a1e; min-height: 148px; cursor: pointer; }
     .nota::before { content: ""; position: absolute; top: -9px; left: 50%; transform: translateX(-50%) rotate(-3deg); width: 60px; height: 19px; background: rgba(214,196,140,.55); border: 1px solid rgba(160,140,90,.3); box-shadow: 0 1px 2px rgba(0,0,0,.2); }
@@ -398,6 +399,7 @@
     <section class="pantalla" id="p-bitacora">
       <h2>📓 Bitácora</h2>
       <button class="bit-nueva-btn" onclick="bitacoraNueva()">✒️ Nueva entrada</button>
+      <button id="btn-poner-pass" class="bit-poner-pass" style="display:none;" onclick="modalCrearPassDiario()">🔒 Poner contraseña al diario</button>
       <div id="bitacora-lista"></div>
     </section>
 
@@ -629,24 +631,33 @@
     function hashDiario(s) { var h = 5381; s = String(s); for (var i = 0; i < s.length; i++) { h = ((h << 5) + h) + s.charCodeAt(i); h = h & 0xffffffff; } return String(h >>> 0); }
     function diarioDesbloqueado() { try { return Date.now() < Number(localStorage.getItem('diario_unlock') || 0); } catch (e) { return false; } }
     function desbloquearDiario() { try { localStorage.setItem('diario_unlock', String(Date.now() + 10 * 60 * 1000)); } catch (e) {} }
+    function tienePassDiario() { try { return !!localStorage.getItem('diario_pass'); } catch (e) { return false; } }
+    function actualizarBotonPass() {
+      var b = document.getElementById('btn-poner-pass');
+      if (b) b.style.display = tienePassDiario() ? 'none' : 'block';
+    }
     function mostrarBitacoraDesbloqueada() {
       var nueva = document.querySelector('#p-bitacora .bit-nueva-btn');
       if (nueva) nueva.style.display = '';
       cerrarModal();
+      actualizarBotonPass();
       cargarBitacora();
     }
     function entrarBitacora() {
       var nueva = document.querySelector('#p-bitacora .bit-nueva-btn');
-      if (diarioDesbloqueado()) {
-        if (nueva) nueva.style.display = '';
-        cargarBitacora();
+      // Si YA tiene contraseña y no está desbloqueado → pedirla.
+      if (tienePassDiario() && !diarioDesbloqueado()) {
+        if (nueva) nueva.style.display = 'none';
+        var cont = document.getElementById('bitacora-lista');
+        if (cont) cont.innerHTML = '<div class="bit-vacia">🔒 Tu diario está cerrado.</div>';
+        actualizarBotonPass();
+        modalDesbloquearDiario();
         return;
       }
-      if (nueva) nueva.style.display = 'none';
-      var cont = document.getElementById('bitacora-lista');
-      if (cont) cont.innerHTML = '<div class="bit-vacia">🔒 Tu diario está cerrado.</div>';
-      if (localStorage.getItem('diario_pass')) { modalDesbloquearDiario(); }
-      else { modalCrearPassDiario(); }
+      // Por defecto (sin contraseña o ya desbloqueado) → abre libre.
+      if (nueva) nueva.style.display = '';
+      actualizarBotonPass();
+      cargarBitacora();
     }
     function modalCrearPassDiario() {
       mostrarModal(
@@ -697,7 +708,8 @@
     }
     function resetPassDiario() {
       try { localStorage.removeItem('diario_pass'); localStorage.removeItem('diario_hint'); localStorage.removeItem('diario_unlock'); } catch (e) {}
-      alert('Contraseña del diario restablecida. La próxima vez que entre a la Bitácora, se pedirá crearla de nuevo.');
+      actualizarBotonPass();
+      alert('Contraseña del diario restablecida. El diario queda sin contraseña; Karen podrá ponerle una nueva cuando quiera desde la Bitácora.');
     }
     let ayudaTimer = null;
     function mostrarAyudaMapa() {
