@@ -1936,7 +1936,10 @@
             html += '<div class="admin-rew-edit' + (r.activo ? '' : ' admin-rew-inactiva') + '"><div>' +
                 '<div class="admin-rew-nombre">' + r.nombre + (r.activo ? '' : ' (oculta)') + '</div>' +
                 '<div class="admin-rew-estado">' + r.costo + ' 🪙 · ' + r.categoria + '</div></div>' +
-                '<button class="admin-rew-edit-btn" onclick="adminEditarRew(\'' + r.id + '\')">Editar</button></div>';
+                '<div style="display:flex;flex-direction:column;gap:6px;">' +
+                  '<button class="admin-rew-edit-btn" onclick="adminEditarRew(\'' + r.id + '\')">Editar</button>' +
+                  '<button class="admin-rew-edit-btn" style="border-color:#b05a4a;color:#e0a0a0;" onclick="adminBorrarRew(\'' + r.id + '\')">Borrar</button>' +
+                '</div></div>';
           });
           cont.innerHTML = html;
         })
@@ -2012,11 +2015,34 @@
           d.misiones.forEach(function(m) {
             html += '<div class="admin-rew-edit"><div><div class="admin-rew-nombre">' + m.titulo + '</div>' +
                 '<div class="admin-rew-estado">' + (CAT_MIS_TXT[m.categoria] || m.categoria) + ' · ' + m.recompensa + ' 🪙 · ' + m.estado + '</div></div>' +
-                '<button class="admin-rew-edit-btn" onclick="adminEditarMis(\'' + m.id + '\')">Editar</button></div>';
+                '<div style="display:flex;flex-direction:column;gap:6px;">' +
+                  '<button class="admin-rew-edit-btn" onclick="adminEditarMis(\'' + m.id + '\')">Editar</button>' +
+                  '<button class="admin-rew-edit-btn" style="border-color:#b05a4a;color:#e0a0a0;" onclick="adminBorrarMis(\'' + m.id + '\')">Borrar</button>' +
+                '</div></div>';
           });
           cont.innerHTML = html;
         })
         .catch(function() { cont.textContent = 'Sin señal.'; });
+    }
+    function adminBorrarMis(id) {
+      if (!confirm('¿Borrar esta misión para siempre?\n\nÚsalo solo para quitar las de prueba. No se puede deshacer.')) return;
+      fetch(URL_CEREBRO + '?accion=admin_borrar_mision&token=' + encodeURIComponent(adminToken) + '&id=' + encodeURIComponent(id))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.ok) { adminCargarMisionesFull(); cargarEstado(); }
+          else { alert(d.error || 'No se pudo borrar.'); manejarSesionExpirada(d); }
+        })
+        .catch(function() { alert('Sin señal.'); });
+    }
+    function adminBorrarRew(id) {
+      if (!confirm('¿Borrar esta recompensa para siempre?\n\nÚsalo solo para quitar las de prueba. No se puede deshacer.')) return;
+      fetch(URL_CEREBRO + '?accion=admin_borrar_recompensa&token=' + encodeURIComponent(adminToken) + '&id=' + encodeURIComponent(id))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.ok) { adminCargarRecompensasFull(); cargarEstado(); }
+          else { alert(d.error || 'No se pudo borrar.'); manejarSesionExpirada(d); }
+        })
+        .catch(function() { alert('Sin señal.'); });
     }
     function adminNuevaMision() {
       MIS_EDITANDO = null;
