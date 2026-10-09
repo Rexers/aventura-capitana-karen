@@ -647,6 +647,10 @@
             <div class="admin-seccion-tit">Zona de peligro</div>
             <p class="admin-nota" style="margin-bottom:10px;">Resetea territorios, misiones, Berries y recompensas. Conserva la bitácora.</p>
             <button class="admin-btn-mini admin-btn-rojo" onclick="adminPedirReset()">🔄 Resetear progreso</button>
+
+            <p class="admin-nota" style="margin:16px 0 10px;"><b>Reinicio TOTAL (para entregar a Karen):</b> hace lo de arriba y además borra TODAS las entradas del diario (con sus fotos de Drive), la contraseña del diario y los borradores de este teléfono. Las misiones y recompensas de prueba bórralas tú a mano antes, con los editores de arriba.</p>
+            <button class="admin-btn-mini admin-btn-rojo" onclick="resetTotalEntrega()">🧹 Reinicio TOTAL (entrega)</button>
+            <div id="reset-total-msg" class="admin-nota" style="margin-top:8px;min-height:1em;"></div>
           </div>
 
         </div>
@@ -1754,6 +1758,66 @@
         })
         .catch(function() { alert('Sin señal.'); });
     }
+    // ===== REINICIO TOTAL (para entregar la app limpia a Karen) =====
+    // No toca el Apps Script: reutiliza bitacora_borrar (borra foto incluida)
+    // y admin_reset, y además limpia los datos locales de este teléfono.
+    function limpiarLocalEntrega_() {
+      try {
+        var claves = ['bit_draft_nueva', 'gear5_fase', 'gear5_armada', 'cola_offline', 'diario_unlock', 'diario_pass', 'diario_hint'];
+        claves.forEach(function(k) { try { localStorage.removeItem(k); } catch (e) {} });
+        var aBorrar = [];
+        for (var i = 0; i < localStorage.length; i++) {
+          var k = localStorage.key(i);
+          if (k && k.indexOf('bit_draft_edit_') === 0) aBorrar.push(k);
+        }
+        aBorrar.forEach(function(k) { try { localStorage.removeItem(k); } catch (e) {} });
+        COLA = [];
+      } catch (e) {}
+    }
+
+    function borrarEntradasSecuencial_(entradas, i, estado) {
+      if (i >= entradas.length) return Promise.resolve();
+      estado('Borrando diario… (' + (i + 1) + '/' + entradas.length + ')');
+      var id = entradas[i] && entradas[i].id;
+      var paso = id
+        ? fetch(URL_CEREBRO + '?accion=bitacora_borrar&id=' + encodeURIComponent(id)).then(function(r) { return r.json(); }).catch(function() { return { ok: false }; })
+        : Promise.resolve({ ok: true });
+      return paso.then(function() { return borrarEntradasSecuencial_(entradas, i + 1, estado); });
+    }
+
+    function resetTotalEntrega() {
+      if (!adminToken) { alert('Primero entra al modo Primer Oficial.'); return; }
+      if (!confirm('⚠️ REINICIO TOTAL para entregar a Karen.\n\nDeja la app como nueva:\n• Progreso, territorios, misiones y Berries → a cero\n• Recompensas → todas disponibles (canjes reabiertos)\n• TODAS las entradas del diario y sus fotos → BORRADAS\n• Contraseña del diario y borradores → borrados\n\nNO se puede deshacer. ¿Continuar?')) return;
+      if (!confirm('Última confirmación: ¿borrar TODO el diario y reiniciar la aventura a cero?')) return;
+
+      var msgEl = document.getElementById('reset-total-msg');
+      function estado(t) { if (msgEl) msgEl.textContent = t; }
+      estado('Leyendo el diario…');
+
+      fetch(URL_CEREBRO + '?accion=bitacora_listar')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          var entradas = (d && d.ok && d.entradas) ? d.entradas : [];
+          return borrarEntradasSecuencial_(entradas, 0, estado);
+        })
+        .then(function() {
+          estado('Reiniciando la aventura…');
+          return fetch(URL_CEREBRO + '?accion=admin_reset&token=' + encodeURIComponent(adminToken)).then(function(r) { return r.json(); });
+        })
+        .then(function(d) {
+          if (!d || !d.ok) { throw new Error((d && d.error) || 'No se pudo reiniciar el progreso.'); }
+          limpiarLocalEntrega_();
+          estado('✔ Listo. La app quedó como nueva.');
+          alert('✔ REINICIO TOTAL completo.\n\nLa app quedó lista para Karen. Revisa que el diario esté vacío y el progreso en 0. Acuérdate de quitar la fecha simulada antes de entregarla.');
+          if (typeof adminVerDiagnostico === 'function') adminVerDiagnostico();
+          cargarEstado();
+        })
+        .catch(function(err) {
+          estado('');
+          alert('Hubo un problema: ' + (err && err.message ? err.message : err) + '\n\nRevisa tu señal e inténtalo de nuevo. Puedes repetir el Reinicio TOTAL sin problema.');
+        });
+    }
+
     function manejarSesionExpirada(d) {
       if (d && d.error && d.error.indexOf('Sesión') !== -1) {
         adminToken = null;
