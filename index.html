@@ -460,6 +460,12 @@
           </div>
 
           <div class="admin-seccion">
+            <div class="admin-seccion-tit">Diario de Karen</div>
+            <p class="admin-nota" style="margin-bottom:10px;">Si Karen olvidó la contraseña de su diario, esto la borra (en este teléfono) para que pueda crear una nueva. No borra ninguna entrada.</p>
+            <button class="admin-btn-mini" onclick="resetPassDiario()">Restablecer contraseña del diario</button>
+          </div>
+
+          <div class="admin-seccion">
             <div class="admin-seccion-tit">Ajustar Berries (pruebas)</div>
             <label class="admin-etiqueta">Sumar o restar (ej: 100 o -50)</label>
             <input type="number" id="admin-monto" class="admin-input" placeholder="Ej: 100 o -50">
@@ -615,8 +621,83 @@
         }, 60);
       }
       if (nombre === 'bitacora') {
-        cargarBitacora();
+        entrarBitacora();
       }
+    }
+
+    // ============ CANDADO DEL DIARIO (privacidad de cortesía) ============
+    function hashDiario(s) { var h = 5381; s = String(s); for (var i = 0; i < s.length; i++) { h = ((h << 5) + h) + s.charCodeAt(i); h = h & 0xffffffff; } return String(h >>> 0); }
+    function diarioDesbloqueado() { try { return Date.now() < Number(localStorage.getItem('diario_unlock') || 0); } catch (e) { return false; } }
+    function desbloquearDiario() { try { localStorage.setItem('diario_unlock', String(Date.now() + 10 * 60 * 1000)); } catch (e) {} }
+    function mostrarBitacoraDesbloqueada() {
+      var nueva = document.querySelector('#p-bitacora .bit-nueva-btn');
+      if (nueva) nueva.style.display = '';
+      cerrarModal();
+      cargarBitacora();
+    }
+    function entrarBitacora() {
+      var nueva = document.querySelector('#p-bitacora .bit-nueva-btn');
+      if (diarioDesbloqueado()) {
+        if (nueva) nueva.style.display = '';
+        cargarBitacora();
+        return;
+      }
+      if (nueva) nueva.style.display = 'none';
+      var cont = document.getElementById('bitacora-lista');
+      if (cont) cont.innerHTML = '<div class="bit-vacia">🔒 Tu diario está cerrado.</div>';
+      if (localStorage.getItem('diario_pass')) { modalDesbloquearDiario(); }
+      else { modalCrearPassDiario(); }
+    }
+    function modalCrearPassDiario() {
+      mostrarModal(
+        '<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
+        '<h3>Tu diario privado 🔒</h3>' +
+        '<p style="font-size:0.9rem;opacity:.9;">Crea una contraseña para tu diario, Capitana. Solo tú podrás abrirlo.</p>' +
+        '<input type="password" id="dp1" class="bit-input" placeholder="Contraseña">' +
+        '<input type="password" id="dp2" class="bit-input" placeholder="Repite la contraseña">' +
+        '<input type="text" id="dph" class="bit-input" placeholder="Una pista por si la olvidas (opcional)">' +
+        '<button class="modal-btn" onclick="crearPassDiario()">Crear y abrir</button>' +
+        '<div id="dp-msg" style="color:#e0a0a0;text-align:center;font-size:0.85rem;margin-top:8px;"></div>'
+      );
+    }
+    function crearPassDiario() {
+      var p1 = gvBit('dp1'), p2 = gvBit('dp2'), h = gvBit('dph');
+      var msg = document.getElementById('dp-msg');
+      if (!p1 || p1.length < 3) { msg.textContent = 'La contraseña debe tener al menos 3 caracteres.'; return; }
+      if (p1 !== p2) { msg.textContent = 'Las contraseñas no coinciden.'; return; }
+      try {
+        localStorage.setItem('diario_pass', hashDiario(p1));
+        localStorage.setItem('diario_hint', h || '');
+      } catch (e) {}
+      desbloquearDiario();
+      mostrarBitacoraDesbloqueada();
+    }
+    function modalDesbloquearDiario() {
+      mostrarModal(
+        '<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
+        '<h3>Diario cerrado 🔒</h3>' +
+        '<p style="font-size:0.9rem;opacity:.9;">Escribe tu contraseña para abrir tu diario, Capitana.</p>' +
+        '<input type="password" id="dp1" class="bit-input" placeholder="Contraseña">' +
+        '<button class="modal-btn" onclick="desbloquearIntento()">Abrir el diario</button>' +
+        '<button class="modal-btn secundario" onclick="verPistaDiario()">¿Olvidaste? Ver pista</button>' +
+        '<div id="dp-msg" style="color:#e0a0a0;text-align:center;font-size:0.85rem;margin-top:8px;"></div>'
+      );
+    }
+    function desbloquearIntento() {
+      var p = gvBit('dp1');
+      var msg = document.getElementById('dp-msg');
+      if (hashDiario(p) === localStorage.getItem('diario_pass')) { desbloquearDiario(); mostrarBitacoraDesbloqueada(); }
+      else { msg.textContent = 'Contraseña incorrecta.'; }
+    }
+    function verPistaDiario() {
+      var h = localStorage.getItem('diario_hint') || '';
+      var msg = document.getElementById('dp-msg');
+      msg.style.color = '#cbb489';
+      msg.textContent = h ? ('Pista: ' + h) : 'No guardaste ninguna pista.';
+    }
+    function resetPassDiario() {
+      try { localStorage.removeItem('diario_pass'); localStorage.removeItem('diario_hint'); localStorage.removeItem('diario_unlock'); } catch (e) {}
+      alert('Contraseña del diario restablecida. La próxima vez que entre a la Bitácora, se pedirá crearla de nuevo.');
     }
     let ayudaTimer = null;
     function mostrarAyudaMapa() {
