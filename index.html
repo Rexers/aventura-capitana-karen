@@ -523,6 +523,7 @@
             <div class="admin-seccion-tit">El Despertar · Gear 5</div>
             <p class="admin-nota" style="margin-bottom:10px;">En el momento de la celebración (17 oct), toca <b>Armar victoria</b>: en la pantalla del Despertar aparecerá el botón "⚔️ Anunciar victoria" para que lo toque la Capitana. "Reiniciar" vuelve todo a la primera pantalla de Kaido (pruebas).</p>
             <button class="admin-btn-mini" onclick="gear5Armar()" style="background:#5a2f9a;margin-bottom:8px;">⚔️ Armar victoria</button>
+            <button class="admin-btn-mini" onclick="revelarObjetoSecreto()" style="background:#7a560c;margin-bottom:8px;">🎽 Revelar objeto (Despertar Gear 5)</button>
             <button class="admin-btn-mini" onclick="gear5Reset()">Reiniciar El Despertar</button>
           </div>
 
@@ -1339,6 +1340,15 @@
     // ===== INVENTARIO =====
     let LISTA_INVENTARIO = [];
     const ICONOS_INV = { 'inv01': '👒', 'inv02': '🧥', 'inv03': '🛂', 'inv04': '🪪', 'inv05': '🥾', 'inv06': '❤️', 'inv07': '❓' };
+    // El objeto secreto (inv07) al revelarse se convierte en la camiseta Gear 5.
+    const OBJETO_SECRETO_ID = 'inv07';
+    const DESPERTAR_GEAR5 = {
+      icono: '🎽',
+      nombre: 'Despertar Gear 5',
+      descripcion: 'La camiseta que llevó la Capitana el día de su Despertar. Lo que durante toda la travesía estuvo clasificado, resultó ser lo más sencillo y lo más grande: ella misma, permitiéndose por fin ser la protagonista de su propia historia.',
+      contenido_secreto: 'Ya no es un misterio, Capitana. Este objeto siempre fuiste tú. 🏴‍☠️'
+    };
+    function objetoRevelado_() { try { return localStorage.getItem('objeto_revelado') === '1'; } catch (e) { return false; } }
     function pintarInventario() {
       if (!LISTA_INVENTARIO.length) return;
       const equipo = LISTA_INVENTARIO.filter(function(o) { return o.categoria === 'equipo_inicial'; });
@@ -1355,15 +1365,19 @@
       }
     }
     function slotHtml_(o) {
-      const icono = ICONOS_INV[o.id] || (o.clasificado ? '❓' : '📦');
-      const claseClasif = o.clasificado ? ' clasificado' : '';
+      const revelado = (o.id === OBJETO_SECRETO_ID && objetoRevelado_());
+      const clasif = o.clasificado && !revelado;
+      const icono = revelado ? DESPERTAR_GEAR5.icono : (ICONOS_INV[o.id] || (clasif ? '❓' : '📦'));
+      const nombre = revelado ? DESPERTAR_GEAR5.nombre : o.nombre;
+      const claseClasif = clasif ? ' clasificado' : '';
       return '<div class="inv-slot' + claseClasif + '" onclick="abrirObjeto(\'' + o.id + '\')">' +
-               '<div class="inv-ic">' + icono + '</div><div class="inv-nombre">' + o.nombre + '</div></div>';
+               '<div class="inv-ic">' + icono + '</div><div class="inv-nombre">' + nombre + '</div></div>';
     }
     function abrirObjeto(idObjeto) {
       const o = LISTA_INVENTARIO.find(function(x) { return x.id === idObjeto; });
       if (!o) return;
-      if (o.clasificado) {
+      const revelado = (o.id === OBJETO_SECRETO_ID && objetoRevelado_());
+      if (o.clasificado && !revelado) {
         mostrarModal('<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
           '<div style="font-size:2.4rem;margin-bottom:6px;">&#10067;</div>' +
           '<h3>OBJETO DESCONOCIDO</h3>' +
@@ -1375,11 +1389,14 @@
           '<button class="modal-btn secundario" onclick="cerrarModal()">Cerrar</button>');
         return;
       }
-      const icono = ICONOS_INV[o.id] || '📦';
+      const icono = revelado ? DESPERTAR_GEAR5.icono : (ICONOS_INV[o.id] || '📦');
+      const nombre = revelado ? DESPERTAR_GEAR5.nombre : o.nombre;
+      const descripcion = revelado ? DESPERTAR_GEAR5.descripcion : (o.descripcion || '');
+      const secreto = revelado ? DESPERTAR_GEAR5.contenido_secreto : o.contenido_secreto;
       mostrarModal('<button class="modal-cerrar" onclick="cerrarModal()">&times;</button>' +
         '<div style="font-size:2.4rem;margin-bottom:6px;">' + icono + '</div>' +
-        '<h3>' + o.nombre + '</h3><p>' + (o.descripcion || '') + '</p>' +
-        (o.contenido_secreto ? '<p style="color:#e8c24a;">' + o.contenido_secreto + '</p>' : '') +
+        '<h3>' + nombre + '</h3><p>' + descripcion + '</p>' +
+        (secreto ? '<p style="color:#e8c24a;">' + secreto + '</p>' : '') +
         '<button class="modal-btn secundario" onclick="cerrarModal()">Cerrar</button>');
     }
 
@@ -1763,7 +1780,7 @@
     // y admin_reset, y además limpia los datos locales de este teléfono.
     function limpiarLocalEntrega_() {
       try {
-        var claves = ['bit_draft_nueva', 'gear5_fase', 'gear5_armada', 'cola_offline', 'diario_unlock', 'diario_pass', 'diario_hint'];
+        var claves = ['bit_draft_nueva', 'gear5_fase', 'gear5_armada', 'objeto_revelado', 'cola_offline', 'diario_unlock', 'diario_pass', 'diario_hint'];
         claves.forEach(function(k) { try { localStorage.removeItem(k); } catch (e) {} });
         var aBorrar = [];
         for (var i = 0; i < localStorage.length; i++) {
@@ -2269,8 +2286,16 @@
     function gear5Ordenar() { g5SetFase('orden_dada'); pintarDespertar(); const c = document.getElementById('contenido'); if (c) c.scrollTop = 0; }
     function gear5Victoria() {
       try { localStorage.removeItem('gear5_armada'); } catch (e) {}
+      try { localStorage.setItem('objeto_revelado', '1'); } catch (e) {}  // revela la camiseta en el inventario
       g5SetFase('victoria'); pintarDespertar();
+      if (typeof pintarInventario === 'function') pintarInventario();
       const c = document.getElementById('contenido'); if (c) c.scrollTop = 0;
+    }
+    // Admin: revela el objeto secreto (la camiseta Gear 5) en el inventario.
+    function revelarObjetoSecreto() {
+      try { localStorage.setItem('objeto_revelado', '1'); } catch (e) {}
+      if (typeof pintarInventario === 'function') pintarInventario();
+      alert('✔ Objeto revelado. El "Objeto desconocido" del inventario ahora es la camiseta "Despertar Gear 5".\n\n(Normalmente se revela solo al tocar "Anunciar victoria". Para ocultarlo de nuevo: "Reiniciar El Despertar".)');
     }
     // Admin: arma el botón de victoria para que la Capitana lo toque en el momento.
     function gear5Armar() {
@@ -2283,7 +2308,9 @@
       if (!confirm('¿Reiniciar El Despertar?\n\nVuelve a la primera pantalla de Kaido (como si Karen no hubiera dado ninguna orden). Útil para pruebas.')) return;
       g5SetFase('');
       try { localStorage.removeItem('gear5_armada'); } catch (e) {}
+      try { localStorage.removeItem('objeto_revelado'); } catch (e) {}
       if (COUNTDOWN_DATA && COUNTDOWN_DATA.hoy && COUNTDOWN_DATA.hoy.fecha === '2026-10-17') { pintarDespertar(); }
+      if (typeof pintarInventario === 'function') pintarInventario();
       alert('✔ El Despertar reiniciado a la primera pantalla.');
     }
 
