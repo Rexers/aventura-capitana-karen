@@ -878,8 +878,8 @@
       }
       var html = '<div class="bit-grid">';
       todas.forEach(function(e) {
-        var prev = (e.texto || '').replace(/</g, '&lt;');
-        var tit = (e.titulo || 'Sin título').replace(/</g, '&lt;');
+        var prev = String(e.texto || '').replace(/</g, '&lt;');
+        var tit = String(e.titulo || 'Sin título').replace(/</g, '&lt;');
         html +=
           '<div class="nota" onclick="bitacoraAbrir(\'' + e.id + '\')">' +
             (e.pendiente ? '<div class="n-pend">⏳ Sin subir</div>' : '') +
@@ -1132,7 +1132,7 @@
         '<div class="hoja">' +
           '<div class="margen"></div>' +
           '<input type="date" id="bit-fecha" class="h-fecha" value="' + e.fecha_iso + '" oninput="guardarBorradorEdit(\'' + id + '\')">' +
-          '<input type="text" id="bit-tit" class="h-titulo" placeholder="Título…" value="' + (e.titulo || '').replace(/"/g, '&quot;') + '" oninput="guardarBorradorEdit(\'' + id + '\')">' +
+          '<input type="text" id="bit-tit" class="h-titulo" placeholder="Título…" value="' + String(e.titulo || '').replace(/"/g, '&quot;') + '" oninput="guardarBorradorEdit(\'' + id + '\')">' +
           (e.media_ids ? '<div class="h-fotos"><div class="mini-pola" id="pola-' + e.id + '"><div class="pola-cargando">Revelando la foto…</div></div></div>' : '') +
           '<textarea id="bit-txt" class="h-cuerpo" oninput="guardarBorradorEdit(\'' + id + '\')">' + (e.texto || '') + '</textarea>' +
         '</div>' +
