@@ -524,6 +524,7 @@
             <p class="admin-nota" style="margin-bottom:10px;">En el momento de la celebración (17 oct), toca <b>Armar victoria</b>: en la pantalla del Despertar aparecerá el botón "⚔️ Anunciar victoria" para que lo toque la Capitana. "Reiniciar" vuelve todo a la primera pantalla de Kaido (pruebas).</p>
             <button class="admin-btn-mini" onclick="gear5Armar()" style="background:#5a2f9a;margin-bottom:8px;">⚔️ Armar victoria</button>
             <button class="admin-btn-mini" onclick="revelarObjetoSecreto()" style="background:#7a560c;margin-bottom:8px;">🎽 Revelar objeto (Despertar Gear 5)</button>
+            <button class="admin-btn-mini" onclick="completarDespertarServidor()" style="background:#1e5a3a;margin-bottom:8px;">✅ Marcar Despertar completado (todos los dispositivos)</button>
             <button class="admin-btn-mini" onclick="gear5Reset()">Reiniciar El Despertar</button>
           </div>
 
@@ -790,6 +791,9 @@
     // ===== CARGA DE DATOS =====
     let FECHA_SISTEMA = '';
     let PROGRESO_PCT = 0;
+    // ¿Ya se completó el Despertar (la batalla final)? Lo dice el cerebro,
+    // así aparece igual en TODOS los dispositivos, no solo en el de Karen.
+    let DESPERTAR_COMPLETADO = false;
     function pintarEstado(estado) {
       if (estado.fecha_sistema) FECHA_SISTEMA = estado.fecha_sistema;
       document.getElementById('capitana').textContent = estado.capitana;
@@ -800,6 +804,13 @@
       document.getElementById('progreso').classList.remove('cargando');
       document.getElementById('barra').style.width = estado.progreso.porcentaje + '%';
         PROGRESO_PCT = estado.progreso.porcentaje;
+      // Si el Despertar ya se completó, la expedición llega al 100%.
+      if (DESPERTAR_COMPLETADO) {
+        var totT = estado.progreso.total;
+        document.getElementById('progreso').textContent = totT + ' / ' + totT + ' territorios (100%)';
+        document.getElementById('barra').style.width = '100%';
+        PROGRESO_PCT = 100;
+      }
       var mision = document.getElementById('mision');
       mision.textContent = estado.mision_actual ? estado.mision_actual.titulo : '(sin misión activa)';
       mision.classList.remove('cargando');
@@ -1348,7 +1359,7 @@
       descripcion: 'La camiseta que llevó la Capitana el día de su Despertar. Lo que durante toda la travesía estuvo clasificado, resultó ser lo más sencillo y lo más grande: ella misma, permitiéndose por fin ser la protagonista de su propia historia.',
       contenido_secreto: 'Ya no es un misterio, Capitana. Este objeto siempre fuiste tú. 🏴‍☠️'
     };
-    function objetoRevelado_() { try { return localStorage.getItem('objeto_revelado') === '1'; } catch (e) { return false; } }
+    function objetoRevelado_() { try { return DESPERTAR_COMPLETADO || localStorage.getItem('objeto_revelado') === '1'; } catch (e) { return DESPERTAR_COMPLETADO; } }
     function pintarInventario() {
       if (!LISTA_INVENTARIO.length) return;
       const equipo = LISTA_INVENTARIO.filter(function(o) { return o.categoria === 'equipo_inicial'; });
@@ -2205,7 +2216,8 @@
       if (!cont) return;
       const h2 = document.querySelector('#p-reservado h2');
       if (h2) h2.style.display = 'none';
-      const fase = g5Fase();
+      // Si el cerebro dice que ya se completó, mostramos la victoria en todos lados.
+      const fase = DESPERTAR_COMPLETADO ? 'victoria' : g5Fase();
 
       // Fase 4: VICTORIA · El Despertar (texto PROVISIONAL, se cambia luego).
       if (fase === 'victoria') {
@@ -2291,6 +2303,19 @@
       if (typeof pintarInventario === 'function') pintarInventario();
       const c = document.getElementById('contenido'); if (c) c.scrollTop = 0;
     }
+    // Admin: marca el Despertar como completado en el cerebro (todos los dispositivos
+    // verán la victoria, el 100% y la camiseta revelada).
+    function completarDespertarServidor() {
+      if (!adminToken) { alert('Primero entra al modo Primer Oficial.'); return; }
+      if (!confirm('¿Marcar el Despertar como COMPLETADO?\n\nEn TODOS los dispositivos aparecerá: la victoria (Kaido derrotado), el 100% y la camiseta revelada. Úsalo cuando la batalla final ya se vivió.')) return;
+      fetch(URL_CEREBRO + '?accion=admin_completar_despertar&token=' + encodeURIComponent(adminToken))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.ok) { DESPERTAR_COMPLETADO = true; alert('✔ ' + d.mensaje); cargarEstado(); }
+          else { alert(d.error || 'No se pudo.'); manejarSesionExpirada(d); }
+        })
+        .catch(function() { alert('Sin señal.'); });
+    }
     // Admin: revela el objeto secreto (la camiseta Gear 5) en el inventario.
     function revelarObjetoSecreto() {
       try { localStorage.setItem('objeto_revelado', '1'); } catch (e) {}
@@ -2323,9 +2348,10 @@
       const h2res = document.querySelector('#p-reservado h2');
       if (h2res) h2res.style.display = '';
 
-      // 17 de octubre: El Despertar toma el control de toda la pantalla.
-      if (ARCHIVO_RESERVADO.desbloqueado && COUNTDOWN_DATA && COUNTDOWN_DATA.fase === 'activo'
-          && COUNTDOWN_DATA.hoy && COUNTDOWN_DATA.hoy.fecha === '2026-10-17') {
+      // El Despertar toma el control: el 17 de octubre, o siempre que ya esté completado.
+      if (ARCHIVO_RESERVADO.desbloqueado && (DESPERTAR_COMPLETADO ||
+          (COUNTDOWN_DATA && COUNTDOWN_DATA.fase === 'activo'
+           && COUNTDOWN_DATA.hoy && COUNTDOWN_DATA.hoy.fecha === '2026-10-17'))) {
         pintarDespertar();
         return;
       }
@@ -2512,12 +2538,19 @@
     window.addEventListener('online', function () { sincronizarCola(); });
 
     function cargarEstado() {
-      fetch(URL_CEREBRO + '?accion=estado')
+      // Primero preguntamos al cerebro si el Despertar ya se completó (todos los dispositivos).
+      fetch(URL_CEREBRO + '?accion=despertar_estado')
         .then(function(r) { return r.json(); })
-        .then(function(d) {
-          if (d.ok) { aplicarPendientesLocales(d.estado); pintarEstado(d.estado); sincronizarCola(); } else { mostrarError(); }
-        })
-        .catch(function() { mostrarError(); });
+        .then(function(dd) { if (dd && dd.ok) DESPERTAR_COMPLETADO = !!dd.completado; })
+        .catch(function() {})
+        .then(function() {
+          fetch(URL_CEREBRO + '?accion=estado')
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+              if (d.ok) { aplicarPendientesLocales(d.estado); pintarEstado(d.estado); sincronizarCola(); } else { mostrarError(); }
+            })
+            .catch(function() { mostrarError(); });
+        });
     }
     cargarEstado();
     actualizarAvisoCola();
